@@ -17,6 +17,21 @@
   --cyan-reveal-highlight-color: #000;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cyan-background-color: rgb(0, 0, 0);
+
+    --cyan-foreground-color: rgb(255, 255, 255);
+    --cyan-foreground-secondary-color: rgb(150, 150, 150);
+    --cyan-foreground-tertiary-color: rgb(80, 80, 80);
+
+    --cyan-border-color: rgba(255, 255, 255, 0.08);
+    --cyan-backdrop-tint-color: rgba(0, 0, 0, 0.5);
+    --cyan-accent-color: #78B3CE;
+    --cyan-reveal-highlight-color: #fff;
+  }
+}
+
 body {
   color: var(--cyan-foreground-color);
   background: var(--cyan-background-color);
