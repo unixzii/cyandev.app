@@ -1,11 +1,9 @@
+import fs from "fs";
+import path from "path";
 import { NextResponse } from "next/server";
 import { ImageResponse } from "@vercel/og";
 
-export const runtime = "edge";
-
-const font = fetch(
-  new URL("../../../../assets/fonts/Inter-Bold.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
+export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -14,7 +12,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ err: "invalid request" }, { status: 400 });
   }
 
-  const fontData = await font;
+  const fontPath = path.join(process.cwd(), "assets/fonts/Inter-Bold.ttf");
+  const fontData = fs.readFileSync(fontPath);
+
   return new ImageResponse(
     (
       <div
