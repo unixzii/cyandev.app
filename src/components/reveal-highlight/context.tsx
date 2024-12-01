@@ -5,7 +5,6 @@ import {
   MouseEventHandler,
   MouseEvent,
   SyntheticEvent,
-  useCallback,
   useContext,
   createContext,
   memo,
@@ -96,7 +95,7 @@ export function useRevealHighlight(
           dispatch({ down: el, scale: 1 });
         });
       },
-      onMouseUp(_ev: MouseEvent) {
+      onMouseUp() {
         dispatch({ up: true });
       },
     };

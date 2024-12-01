@@ -43,10 +43,11 @@ function urlForParams({ slug, lang }: Params): string {
 }
 
 export async function generateMetadata({
-  params: { slug, lang },
+  params,
 }: {
-  params: Params;
+  params: Promise<Params>;
 }): Promise<NextMetadata> {
+  const { lang, slug } = await params;
   const normalizedLang = normalizeLang(lang);
   const slugWithLang = normalizedLang ? `${slug}.${normalizedLang}` : slug;
 
@@ -65,11 +66,8 @@ export async function generateMetadata({
   }
 }
 
-export default async function Page({
-  params: { slug, lang },
-}: {
-  params: Params;
-}) {
+export default async function Page({ params }: { params: Promise<Params> }) {
+  const { lang, slug } = await params;
   const normalizedLang = normalizeLang(lang);
   const slugWithLang = normalizedLang ? `${slug}.${normalizedLang}` : slug;
 

@@ -1,5 +1,3 @@
-"use client";
-
 import { RevealHighlightPlatter } from "@/components/reveal-highlight";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
@@ -24,12 +22,12 @@ export default function NotFound() {
         </div>
       </div>
       <div className="pt-16 md:px-24 md:py-16 md:opacity-60 md:hover:opacity-100 md:transition-opacity md:duration-500">
-        <RevealHighlightPlatter innerClassName="flex items-center animate-glitch-blink-passive">
+        <RevealHighlightPlatter>
           <Button
             extraClassName="!py-2"
             title="Back"
             aria-label="Back"
-            onClick={() => history.back()}
+            /*onClick={() => history.back()}*/
           >
             <Icon icon="arrowLeft" size="lg" />
           </Button>

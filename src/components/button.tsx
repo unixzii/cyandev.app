@@ -3,7 +3,7 @@
 import { ForwardedRef, PropsWithChildren, forwardRef } from "react";
 import { useRefWithHandler, renderHtmlElement } from "@/utils";
 import { WrappedComponent, WrapperComponentProps } from "@/utils/types";
-import { useRevealHighlight, ELEMENT_STATE_ENTERED } from "./reveal-highlight";
+import { useRevealHighlight } from "./reveal-highlight";
 
 export type ButtonProps<Comp extends WrappedComponent> = WrapperComponentProps<
   Comp,
@@ -28,12 +28,12 @@ export const Button = forwardRef(function Button<T extends WrappedComponent>(
 
   const revealHighlight = useRevealHighlight();
   const innerRef = useRefWithHandler(
-    (el: HTMLDivElement) => {
-      if (active === true) {
-        revealHighlight.setElementState(el, ELEMENT_STATE_ENTERED);
-      } else if (active === false) {
-        revealHighlight.clearElementState(el, ELEMENT_STATE_ENTERED);
-      }
+    (/*el: HTMLDivElement*/) => {
+      // if (active === true) {
+      //   revealHighlight.setElementState(el, ELEMENT_STATE_ENTERED);
+      // } else if (active === false) {
+      //   revealHighlight.clearElementState(el, ELEMENT_STATE_ENTERED);
+      // }
     },
     ref,
     [active]

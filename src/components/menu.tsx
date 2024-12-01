@@ -50,7 +50,7 @@ export function Menu<T>(props: MenuProps<T>) {
             onOpen={props.onOpen}
             onClose={props.onClose}
           />
-          <RevealHighlightPlatter innerClassName={props.menuContainerClassName}>
+          <RevealHighlightPlatter>
             {props.items.map((item) => {
               const [childFn, key] = props.itemRenderer(item);
               return (

@@ -79,10 +79,10 @@ export function RevealHighlightPlatter(props: React.PropsWithChildren<{}>) {
   );
 
   const { hoveredElement, pressedElement, insets } = state;
+  const insetWidth = insets[0];
+  const insetHeight = insets[1];
   const hoveredElementBoundingRect = useMemo(() => {
     if (hoveredElement) {
-      const insetWidth = insets[0];
-      const insetHeight = insets[1];
       const rect = hoveredElement.getBoundingClientRect();
       return {
         x: rect.x - insetWidth,
@@ -92,7 +92,7 @@ export function RevealHighlightPlatter(props: React.PropsWithChildren<{}>) {
       };
     }
     return { x: 0, y: 0, width: 0, height: 0 };
-  }, [hoveredElement, insets[0], insets[1]]);
+  }, [hoveredElement, insetWidth, insetHeight]);
 
   return (
     <RevealHighlightPlatterContextProvider value={context}>
