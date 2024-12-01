@@ -1,0 +1,35 @@
+.cyan-mobile-menu-icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.cyan-mobile-menu-icon:after,
+.cyan-mobile-menu-icon:before {
+  content: "";
+  display: block;
+  height: 1.5px;
+  width: 22px;
+  background-color: var(--cyan-foreground-secondary-color);
+  transition: transform 0.3s ease;
+}
+
+.cyan-mobile-menu-icon:before {
+  transform: translateY(-4px) rotate(0deg);
+}
+
+.cyan-mobile-menu-icon:after {
+  transform: translateY(4px) rotate(0deg);
+}
+
+.cyan-mobile-menu-icon.cyan-mobile-menu-expanded:before {
+  transform: translateY(1px) rotate(45deg);
+}
+
+.cyan-mobile-menu-icon.cyan-mobile-menu-expanded:after {
+  transform: translateY(0) rotate(-45deg);
+}
