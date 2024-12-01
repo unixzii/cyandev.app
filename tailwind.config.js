@@ -30,7 +30,7 @@ module.exports = {
         "foreground-tertiary": "var(--cyan-foreground-tertiary-color)",
         "backdrop-tint": "var(--cyan-backdrop-tint-color)",
         "accent": "var(--cyan-accent-color)",
-        "reveal-highlight": "#fff",
+        "reveal-highlight": "var(--cyan-reveal-highlight-color)",
         caret: "#1ccdff",
       },
       animation: {

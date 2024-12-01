@@ -9,26 +9,21 @@ import {
   useContext,
   createContext,
   memo,
+  useMemo,
 } from "react";
 import { MethodKeys } from "@/utils/types";
+import { RevealHighlightPlatterAction } from "./RevealHighlightPlatter";
 
-export type ElementState = number;
-export const ELEMENT_STATE_ENTERED: ElementState = 1;
-export const ELEMENT_STATE_DOWN: ElementState = 1 << 1;
-export const ELEMENT_STATE_ALL: ElementState =
-  ELEMENT_STATE_ENTERED | ELEMENT_STATE_DOWN;
-
-export interface IRevealHighlightPlatterContext {
-  setElementState: (el: HTMLElement, state: ElementState) => void;
-  clearElementState: (el: HTMLElement, state: ElementState) => void;
+export interface RevealHighlightPlatterContext {
+  dispatch: (action: RevealHighlightPlatterAction) => void;
 }
 
 const RevealHighlightPlatterContext =
-  createContext<IRevealHighlightPlatterContext | null>(null);
+  createContext<RevealHighlightPlatterContext | null>(null);
 
 export const RevealHighlightPlatterContextProvider = memo<
   PropsWithChildren<{
-    value: IRevealHighlightPlatterContext;
+    value: RevealHighlightPlatterContext;
   }>
 >(function RevealHighlightPlatterContextProvider({ value, children }) {
   return (
@@ -61,8 +56,6 @@ function withHTMLEventTarget<R>(
 }
 
 export type UseRevealHighlight = {
-  setElementState: (el: HTMLElement, state: ElementState) => void;
-  clearElementState: (el: HTMLElement, state: ElementState) => void;
   targetProps: {
     onMouseLeave: MouseEventHandler;
     onMouseEnter: MouseEventHandler;
@@ -71,52 +64,45 @@ export type UseRevealHighlight = {
   };
 };
 
-export function useRevealHighlight(): UseRevealHighlight {
+export type RevealHighlightProps = {
+  insetWidth?: number;
+  insetHeight?: number;
+};
+
+export function useRevealHighlight(
+  props?: RevealHighlightProps
+): UseRevealHighlight {
+  const insetWidth = props?.insetWidth ?? 0;
+  const insetHeight = props?.insetHeight ?? 0;
+
   const context = useContext(RevealHighlightPlatterContext);
 
-  const setElementState = wrapContextFn(context, "setElementState");
-  const clearElementState = wrapContextFn(context, "clearElementState");
-  const onMouseEnter = useCallback(
-    (ev: MouseEvent) => {
-      withHTMLEventTarget(ev, (el) => {
-        context?.setElementState(el, ELEMENT_STATE_ENTERED);
-      });
-    },
-    [context]
-  );
-  const onMouseLeave = useCallback(
-    (ev: MouseEvent) => {
-      withHTMLEventTarget(ev, (el) => {
-        context?.clearElementState(el, ELEMENT_STATE_ALL);
-      });
-    },
-    [context]
-  );
-  const onMouseDown = useCallback(
-    (ev: MouseEvent) => {
-      withHTMLEventTarget(ev, (el) => {
-        context?.setElementState(el, ELEMENT_STATE_DOWN);
-      });
-    },
-    [context]
-  );
-  const onMouseUp = useCallback(
-    (ev: MouseEvent) => {
-      withHTMLEventTarget(ev, (el) => {
-        context?.clearElementState(el, ELEMENT_STATE_DOWN);
-      });
-    },
-    [context]
-  );
+  const targetProps = useMemo(() => {
+    const dispatch = wrapContextFn(context, "dispatch");
+
+    return {
+      onMouseEnter(ev: MouseEvent) {
+        withHTMLEventTarget(ev, (el) => {
+          dispatch({ enter: el, insets: [insetWidth, insetHeight] });
+        });
+      },
+      onMouseLeave(ev: MouseEvent) {
+        withHTMLEventTarget(ev, (el) => {
+          dispatch({ leave: el });
+        });
+      },
+      onMouseDown(ev: MouseEvent) {
+        withHTMLEventTarget(ev, (el) => {
+          dispatch({ down: el, scale: 1 });
+        });
+      },
+      onMouseUp(_ev: MouseEvent) {
+        dispatch({ up: true });
+      },
+    };
+  }, [context, insetWidth, insetHeight]);
 
   return {
-    setElementState,
-    clearElementState,
-    targetProps: {
-      onMouseEnter,
-      onMouseLeave,
-      onMouseDown,
-      onMouseUp,
-    },
+    targetProps,
   };
 }

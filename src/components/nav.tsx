@@ -5,8 +5,40 @@ import invariant from "invariant";
 import { selectClass } from "@/utils";
 import { Link } from "./link";
 import { ReadableArea } from "./adaptive-containers";
+import { RevealHighlightPlatter, useRevealHighlight } from "./reveal-highlight";
 
-export const NavBar: FC = () => {
+interface NavLinkProps {
+  title: string;
+  href: string;
+}
+
+function NavLink(props: NavLinkProps) {
+  const { targetProps } = useRevealHighlight({ insetWidth: 2, insetHeight: 4 });
+
+  return (
+    <Link
+      className="px-3 hover:text-foreground transition-colors duration-200"
+      href={props.href}
+      onMouseEnter={targetProps.onMouseEnter}
+      onMouseLeave={targetProps.onMouseLeave}
+      onMouseDown={targetProps.onMouseDown}
+      onMouseUp={targetProps.onMouseUp}
+    >
+      {props.title}
+    </Link>
+  );
+}
+
+function NavLinks() {
+  return (
+    <div className="flex font-light text-foreground-secondary">
+      <NavLink title="Notes" href="/" />
+      <NavLink title="About Me" href="/" />
+    </div>
+  );
+}
+
+export function NavBar() {
   const [hairlineVisible, setHairlineVisible] = useState(false);
   const scrollDetectorElementRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -36,25 +68,14 @@ export const NavBar: FC = () => {
           "border-transparent": !hairlineVisible,
         })}
       >
-        <ReadableArea className="flex gap-6">
-          <span className="font-bold cursor-default">Cyandev</span>
-          <div className="flex gap-6 font-light text-foreground-secondary">
-            <Link
-              className="hover:text-foreground transition-colors duration-200"
-              href="/"
-            >
-              Notes
-            </Link>
-            <Link
-              className="hover:text-foreground transition-colors duration-200"
-              href="/"
-            >
-              About Me
-            </Link>
-          </div>
+        <ReadableArea className="flex">
+          <span className="font-bold cursor-default mr-3">Cyandev</span>
+          <RevealHighlightPlatter>
+            <NavLinks />
+          </RevealHighlightPlatter>
         </ReadableArea>
       </nav>
       <div className="h-16" ref={scrollDetectorElementRef} />
     </Fragment>
   );
-};
+}

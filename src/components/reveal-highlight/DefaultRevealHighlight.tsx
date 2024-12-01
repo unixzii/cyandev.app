@@ -33,8 +33,8 @@ export function DefaultRevealHighlight(props: DefaultRevealHighlightProps) {
       springApi.start({
         to: { width, height, top, left },
         config: {
-          tension: 270,
-          friction: 30,
+          tension: 370,
+          friction: 35,
         },
       });
     } else {
@@ -49,9 +49,12 @@ export function DefaultRevealHighlight(props: DefaultRevealHighlightProps) {
       return undefined;
     }
 
-    const timerId = setTimeout(() => {
-      animationEnabledRef.current = false;
-    }, (opacityTransitionDuration / 2) * 1000);
+    const timerId = setTimeout(
+      () => {
+        animationEnabledRef.current = false;
+      },
+      (opacityTransitionDuration / 2) * 1000
+    );
     return () => {
       clearTimeout(timerId);
     };
@@ -65,7 +68,7 @@ export function DefaultRevealHighlight(props: DefaultRevealHighlightProps) {
         height: springValues.height,
         left: springValues.left,
         top: springValues.top,
-        opacity: visible ? (pressed ? 0.1 : 0.2) : 0,
+        opacity: visible ? (pressed ? 0.12 : 0.06) : 0,
         transition: `opacity ${opacityTransitionDuration}s ease`,
       }}
     />

@@ -7,6 +7,7 @@ import { Inter } from "next/font/google";
 import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
+import { Footer } from "@/components/footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
       <body>
         <NavBar />
         <div className={inter.className}>{children}</div>
+        <Footer />
       </body>
       <Analytics />
     </html>
