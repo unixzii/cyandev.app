@@ -1,19 +1,27 @@
 "use client";
 
-import { FC, Fragment, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import Link from "next/link";
 import invariant from "invariant";
 import { selectClass } from "@/utils";
-import { Link } from "./link";
+import { Icon } from "@/components/icon";
 import { ReadableArea } from "./adaptive-containers";
 import { RevealHighlightPlatter, useRevealHighlight } from "./reveal-highlight";
+import me from "../../data/me.json";
 
 interface NavLinkProps {
   title: string;
+  icon?: string;
   href: string;
 }
 
 function NavLink(props: NavLinkProps) {
-  const { targetProps } = useRevealHighlight({ insetWidth: 2, insetHeight: 4 });
+  const { title, icon, href } = props;
+
+  const { targetProps } = useRevealHighlight({
+    insetWidth: !!icon ? 0 : 2,
+    insetHeight: 4,
+  });
 
   return (
     <Link
@@ -23,17 +31,27 @@ function NavLink(props: NavLinkProps) {
       onMouseLeave={targetProps.onMouseLeave}
       onMouseDown={targetProps.onMouseDown}
       onMouseUp={targetProps.onMouseUp}
+      aria-label={title}
     >
-      {props.title}
+      {icon ? <Icon icon={icon as any} /> : title}
     </Link>
   );
 }
 
 function NavLinks() {
   return (
-    <div className="flex font-light text-foreground-secondary">
+    <div className="flex flex-1 font-light text-foreground-secondary">
       <NavLink title="Notes" href="/" />
       <NavLink title="About Me" href="/" />
+      <div className="flex-1" />
+      {me.links.map((link) => (
+        <NavLink
+          key={link.title}
+          title={link.title}
+          icon={link.icon}
+          href={link.url}
+        />
+      ))}
     </div>
   );
 }

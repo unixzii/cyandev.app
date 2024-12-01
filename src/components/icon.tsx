@@ -4,6 +4,7 @@ import {
   faTwitter,
   faGithub,
   faInstagram,
+  faBilibili,
 } from "@fortawesome/free-brands-svg-icons";
 import { SizeProp } from "@fortawesome/fontawesome-svg-core";
 import {
@@ -16,6 +17,7 @@ const ICON_MAP = {
   twitter: faTwitter,
   github: faGithub,
   instagram: faInstagram,
+  bilibili: faBilibili,
   ellipsis: faEllipsisH,
   arrowLeft: faArrowLeft,
   house: faHouse,
