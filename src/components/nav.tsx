@@ -1,18 +1,17 @@
 "use client";
 
-import { FC, Fragment, useEffect, useRef, useState } from "react";
+import { FC, Fragment, useLayoutEffect, useRef, useState } from "react";
+import invariant from "invariant";
 import { selectClass } from "@/utils";
 import { Link } from "./link";
 import { ReadableArea } from "./adaptive-containers";
 
 export const NavBar: FC = () => {
   const [hairlineVisible, setHairlineVisible] = useState(false);
-  const scrollDetectorElementRef = useRef(null);
-  useEffect(() => {
+  const scrollDetectorElementRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
     const scrollDetectorElement = scrollDetectorElementRef.current;
-    if (!scrollDetectorElement) {
-      return;
-    }
+    invariant(!!scrollDetectorElement, "This should not be null");
 
     const ob = new IntersectionObserver(
       (entries) => {
@@ -31,23 +30,26 @@ export const NavBar: FC = () => {
     <Fragment>
       <nav
         className={selectClass({
-          "fixed top-0 w-full py-4 z-50 backdrop-blur bg-background/80 border-b transition-colors duration-500":
+          "fixed top-0 w-full py-4 z-50 bg-backdrop-tint backdrop-blur border-b transition-colors duration-500":
             true,
           "border-border": hairlineVisible,
           "border-transparent": !hairlineVisible,
         })}
       >
-        <ReadableArea className="flex gap-12">
-          <a className="font-bold">Cyandev</a>
+        <ReadableArea className="flex gap-6">
+          <span className="font-bold cursor-default">Cyandev</span>
           <div className="flex gap-6 font-light text-foreground-secondary">
-            <Link className="hover:text-foreground transition-colors" href="/">
-              Home
+            <Link
+              className="hover:text-foreground transition-colors duration-200"
+              href="/"
+            >
+              Notes
             </Link>
             <Link
-              className="hover:text-foreground transition-colors"
-              href="/blog"
+              className="hover:text-foreground transition-colors duration-200"
+              href="/"
             >
-              Blog
+              About Me
             </Link>
           </div>
         </ReadableArea>

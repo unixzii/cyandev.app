@@ -33,9 +33,9 @@ export default function buildMetadata(metadata: Metadata): NextMetadata {
       initialScale: 1,
       viewportFit: "cover",
     },
-    themeColor: "#000",
+    themeColor: "#78B3CE",
     other: {
-      "msapplication-TileColor": "#000000",
+      "msapplication-TileColor": "#78B3CE",
     },
   };
 }

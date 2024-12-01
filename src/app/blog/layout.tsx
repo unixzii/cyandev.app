@@ -7,7 +7,6 @@ import { SlotProvider } from "@/components/slot";
 export default function BlogLayout({ children }: PropsWithChildren) {
   return (
     <SlotProvider>
-      <NavBar />
       <ReadableArea hasVerticalMargins>{children}</ReadableArea>
       <Footer />
     </SlotProvider>

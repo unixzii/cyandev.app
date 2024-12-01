@@ -35,7 +35,7 @@ export function LangSwitcher(props: LangSwitcherProps) {
           className={selectClass({
             "flex-1 transition-colors duration-300": true,
             "text-foreground font-semibold": !value,
-            "text-foreground/50": value,
+            "text-foreground": value,
           })}
         >
           A
@@ -44,7 +44,7 @@ export function LangSwitcher(props: LangSwitcherProps) {
           className={selectClass({
             "flex-1 transition-colors duration-300": true,
             "text-foreground font-semibold": value,
-            "text-foreground/50": !value,
+            "text-foreground": !value,
           })}
         >
           中

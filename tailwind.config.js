@@ -23,11 +23,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#000",
-        foreground: "#fff",
-        "foreground-secondary": "#888",
-        "foreground-tertiary": "#666",
-        border: "rgba(255, 255, 255, 0.15)",
+        background: "var(--cyan-background-color)",
+        foreground: "var(--cyan-foreground-color)",
+        border: "var(--cyan-border-color)",
+        "foreground-secondary": "var(--cyan-foreground-secondary-color)",
+        "foreground-tertiary": "var(--cyan-foreground-tertiary-color)",
+        "backdrop-tint": "var(--cyan-backdrop-tint-color)",
+        "accent": "var(--cyan-accent-color)",
         "reveal-highlight": "#fff",
         caret: "#1ccdff",
       },

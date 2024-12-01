@@ -5,15 +5,18 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 0, 0, 0;
-}
+  --cyan-background-color: rgb(255, 255, 255);
 
-html {
-  color-scheme: dark;
+  --cyan-foreground-color: rgb(55, 55, 55);
+  --cyan-foreground-secondary-color: rgb(150, 150, 150);
+  --cyan-foreground-tertiary-color: rgb(200, 200, 200);
+
+  --cyan-border-color: rgba(0, 0, 0, 0.08);
+  --cyan-backdrop-tint-color: rgba(255, 255, 255, 0.7);
+  --cyan-accent-color: #78B3CE;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  color: var(--cyan-foreground-color);
+  background: var(--cyan-background-color);
 }

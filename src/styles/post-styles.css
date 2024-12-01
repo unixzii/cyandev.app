@@ -1,6 +1,6 @@
 /* Global styles */
 .markdown-reader {
-    @apply leading-relaxed text-foreground/80 text-lg font-light;
+    @apply leading-relaxed text-foreground text-lg font-light;
 
     /* Reset text color for emphasized items */
     h1, h2, h3, strong, pre {
@@ -33,7 +33,7 @@
 
     /* Inline code styles */
     code {
-        @apply px-1.5 py-0.5 text-foreground/90 bg-foreground/10 border border-border text-sm rounded-md;
+        @apply px-1.5 py-0.5 text-foreground bg-foreground border border-border text-sm rounded-md;
     }
 
     /* Bold text styles */
@@ -54,7 +54,7 @@
 
     /* Blockquote styles */
     blockquote, pre {
-        @apply my-4 py-4 bg-foreground/5 border border-border rounded-lg;
+        @apply my-4 py-4 bg-foreground border border-border rounded-lg;
     }
     blockquote {
         @apply px-4;
@@ -78,7 +78,7 @@
     code {
         /* Syntax highlighting theme */
         .comment {
-            @apply text-foreground/40;
+            @apply text-foreground;
         }
         .keyword, .key, .boolean {
             @apply text-blue-400;
@@ -102,7 +102,7 @@
             @apply text-orange-300;
         }
         .punctuation, .tag.punctuation {
-            @apply text-foreground/70;
+            @apply text-foreground;
         }
     }
 }

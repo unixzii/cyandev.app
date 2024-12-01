@@ -20,7 +20,7 @@ function createRenderer(highlightLines: Set<number>): Renderer {
         <div
           className={selectClass({
             "relative px-4 py-0.5": true,
-            "bg-foreground/10": highlightLines.has(i),
+            "bg-foreground": highlightLines.has(i),
           })}
           key={`code-line-${i}`}
         >
