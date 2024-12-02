@@ -8,6 +8,7 @@ import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
 import { Footer } from "@/components/footer";
+import { GrainTextureBackground } from "@/components/background-textures";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,9 +22,12 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en">
       <body>
-        <NavBar />
-        <div className={inter.className}>{children}</div>
-        <Footer />
+        <div className="relative min-h-screen">
+          <GrainTextureBackground />
+          <NavBar />
+          <div className={inter.className}>{children}</div>
+          <Footer />
+        </div>
       </body>
       <Analytics />
     </html>
