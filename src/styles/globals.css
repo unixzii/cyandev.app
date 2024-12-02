@@ -4,7 +4,7 @@
 
 :root {
   --cyan-background-color: rgb(255, 254, 253);
-  --cyan-background-secondary-color: rgb(250, 249, 248);
+  --cyan-background-secondary-color: rgb(246, 245, 244);
   --cyan-background-tertiary-color: rgb(238, 238, 238);
 
   --cyan-foreground-color: rgb(65, 65, 60);
@@ -13,15 +13,15 @@
 
   --cyan-border-color: rgba(0, 0, 0, 0.08);
   --cyan-border-stronger-color: rgba(0, 0, 0, 0.1);
-  --cyan-backdrop-tint-color: rgba(255, 254, 253, 0.7);
-  --cyan-accent-color: #78B3CE;
+  --cyan-backdrop-tint-color: rgba(255, 255, 255, 0.7);
+  --cyan-accent-color: #78b3ce;
   --cyan-reveal-highlight-color: #000;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --cyan-background-color: rgb(25, 25, 28);
-    --cyan-background-secondary-color: rgb(32, 32, 34);
+    --cyan-background-secondary-color: rgb(35, 35, 38);
     --cyan-background-tertiary-color: rgb(45, 45, 45);
 
     --cyan-foreground-color: rgb(230, 230, 220);
@@ -30,8 +30,8 @@
 
     --cyan-border-color: rgba(255, 255, 255, 0.08);
     --cyan-border-stronger-color: rgba(255, 255, 255, 0.14);
-    --cyan-backdrop-tint-color: rgba(25, 25, 28, 0.7);
-    --cyan-accent-color: #78B3CE;
+    --cyan-backdrop-tint-color: rgba(35, 35, 35, 0.8);
+    --cyan-accent-color: #78b3ce;
     --cyan-reveal-highlight-color: #fff;
   }
 }

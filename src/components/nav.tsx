@@ -185,10 +185,11 @@ export function NavBar() {
       <animated.nav
         className={selectClass(
           {
-            "border-border": hairlineVisible || expanded,
+            "border-border bg-backdrop-tint backdrop-blur":
+              hairlineVisible || expanded,
             "border-transparent": !(hairlineVisible || expanded),
           },
-          "fixed top-0 w-full z-50 bg-backdrop-tint backdrop-blur border-b transition-colors duration-500 overflow-hidden"
+          "fixed top-0 w-full z-50 border-b transition-colors duration-500 overflow-hidden"
         )}
         style={{ height: springValues.height }}
       >
