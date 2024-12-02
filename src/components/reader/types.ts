@@ -10,6 +10,12 @@ export type BlockObject = TypedObject & {
   listItem?: "number" | "bullet";
 };
 
+export type CodeBlockObject = TypedObject & {
+  language: string;
+  code: string;
+  highlightedLines?: number[];
+};
+
 export type InlineObject = TypedObject & {
   marks: string[];
   text: string;

@@ -1,6 +1,7 @@
 import { createElement } from "react";
-import { BlockObject } from "./types";
+import { BlockObject, CodeBlockObject } from "./types";
 import { InlineRenderer } from "./InlineRenderer";
+import { CodeBlockRenderer } from "./CodeBlockRenderer";
 
 export interface BlockRendererProps {
   block: BlockObject;
@@ -70,6 +71,8 @@ export function BlockRenderer(props: BlockRendererProps) {
   const { block } = props;
   if (block._type === "block") {
     return <ParagraphRenderer block={block} />;
+  } else if (block._type === "code") {
+    return <CodeBlockRenderer block={block as unknown as CodeBlockObject} />;
   }
 
   return null;

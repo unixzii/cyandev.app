@@ -1,8 +1,12 @@
 .cyan-reader {
   --cyan-reader-surface-color: #fff;
 
+  @media (prefers-color-scheme: dark) {
+    --cyan-reader-surface-color: #181818;
+  }
+
   p {
-    @apply font-light text-lg mb-4;
+    @apply font-light text-base mb-4;
   }
 
   blockquote {
@@ -104,8 +108,32 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .cyan-reader {
-    --cyan-reader-surface-color: #181818;
+.shiki-code {
+  pre {
+    @apply my-6 py-4 overflow-x-scroll;
+    border-radius: 12px;
+    border: 1px solid var(--cyan-border-stronger-color);
+  }
+
+  code {
+    @apply flex flex-col text-sm bg-transparent p-0 min-w-full w-fit;
+  }
+
+  .line {
+    @apply block px-5 py-[1px];
+
+    &.highlighted-line {
+      @apply bg-background-tertiary;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    pre {
+      background-color: var(--shiki-dark-bg) !important;
+    }
+
+    span {
+      color: var(--shiki-dark) !important;
+    }
   }
 }
