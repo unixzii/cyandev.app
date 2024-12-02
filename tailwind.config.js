@@ -38,6 +38,10 @@ module.exports = {
         "glitch-blink": "glitchBlink 2s linear both",
         "glitch-blink-passive": "glitchBlinkPassive 2s linear both",
       },
+      fontFamily: {
+        "serif": "var(--cyan-serif-font)",
+        "mono": "var(--cyan-mono-font)",
+      },
       keyframes: {
         smoothBlink: {
           "0%, 40%, 100%": { opacity: 1 },

@@ -3,14 +3,22 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 
 import { PropsWithChildren } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import { Inter } from "next/font/google";
+import { Geist, Noto_Serif, Geist_Mono } from "next/font/google";
 import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { GrainTextureBackground } from "@/components/background-textures";
 
-const inter = Inter({ subsets: ["latin"] });
+const sansFont = Geist({ subsets: ["latin"] });
+const serifFont = Noto_Serif({
+  subsets: ["latin"],
+  variable: "--cyan-serif-font",
+});
+const monoFont = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--cyan-mono-font",
+});
 
 // Workaround: don't inject Font Awesome CSS at run-time,
 // which may cause layout shifts.
@@ -21,11 +29,13 @@ export const metadata = buildMetadata({});
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en">
-      <body>
+      <body
+        className={`${sansFont.className} ${serifFont.variable} ${monoFont.variable}`}
+      >
         <div className="relative min-h-screen">
           <GrainTextureBackground />
           <NavBar />
-          <div className={inter.className}>{children}</div>
+          <div>{children}</div>
           <Footer />
         </div>
       </body>
