@@ -1,10 +1,12 @@
 .cyan-reader {
+  --cyan-reader-surface-color: #fff;
+
   p {
     @apply font-light text-lg mb-4;
   }
 
   blockquote {
-    @apply my-6 p-4;
+    @apply my-6 p-4 bg-background-secondary;
     border: 1px solid var(--cyan-border-stronger-color);
     border-radius: 12px;
   }
@@ -25,7 +27,7 @@
       @apply pl-1;
 
       &::marker {
-        @apply font-light text-accent text-sm;
+        @apply font-serif font-light text-accent;
       }
     }
 
@@ -51,20 +53,15 @@
 
     &::before {
       content: "#";
-      display: flex;
-      position: absolute;
       left: -30px;
       top: 8px;
       width: 20px;
       height: 20px;
-      align-items: center;
-      justify-content: center;
       border: 1px solid var(--cyan-border-stronger-color);
       border-radius: 4px;
-      opacity: 0;
-      pointer-events: none;
+      background-color: var(--cyan-reader-surface-color);
 
-      @apply font-mono text-xs transition-opacity duration-200;
+      @apply absolute flex items-center justify-center font-serif text-xs shadow opacity-0 transition-opacity duration-200 pointer-events-none;
     }
 
     &:hover::before {
@@ -100,5 +97,15 @@
 
   strong {
     @apply font-bold;
+  }
+
+  code {
+    @apply relative px-1 bg-accent-alt/10 text-accent font-mono font-light;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .cyan-reader {
+    --cyan-reader-surface-color: #181818;
   }
 }

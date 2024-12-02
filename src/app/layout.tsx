@@ -3,14 +3,14 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 
 import { PropsWithChildren } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import { Geist, Noto_Serif, Geist_Mono } from "next/font/google";
+import { Inter, Noto_Serif, Geist_Mono } from "next/font/google";
 import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { GrainTextureBackground } from "@/components/background-textures";
 
-const sansFont = Geist({ subsets: ["latin"] });
+const sansFont = Inter({ subsets: ["latin"] });
 const serifFont = Noto_Serif({
   subsets: ["latin"],
   variable: "--cyan-serif-font",

@@ -23,15 +23,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "var(--cyan-background-color)",
-        foreground: "var(--cyan-foreground-color)",
-        border: "var(--cyan-border-color)",
+        "background": "var(--cyan-background-color)",
+        "background-secondary": "var(--cyan-background-secondary-color)",
+        "background-tertiary": "var(--cyan-background-tertiary-color)",
+        "foreground": "var(--cyan-foreground-color)",
         "foreground-secondary": "var(--cyan-foreground-secondary-color)",
         "foreground-tertiary": "var(--cyan-foreground-tertiary-color)",
+        "border": "var(--cyan-border-color)",
         "backdrop-tint": "var(--cyan-backdrop-tint-color)",
         "accent": "var(--cyan-accent-color)",
+        "accent-alt": "#78B3CE",
         "reveal-highlight": "var(--cyan-reveal-highlight-color)",
-        caret: "#1ccdff",
       },
       animation: {
         "smooth-blink": "smoothBlink 1s linear infinite",

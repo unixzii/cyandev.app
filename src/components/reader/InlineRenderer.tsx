@@ -32,6 +32,8 @@ export function InlineRenderer(props: InlineRendererProps) {
     }
     if (mark === "strong") {
       child = <strong>{child}</strong>;
+    } else if (mark === "code") {
+      child = <code>{child}</code>;
     }
   }
 
