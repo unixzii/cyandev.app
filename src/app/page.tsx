@@ -19,10 +19,10 @@ function NoteItem(props: NoteItemProps) {
   const { note } = props;
   return (
     <div className="py-3">
-      <div>
+      <div className="mb-1">
         <Link
           className="mr-2 text-lg underline decoration-transparent hover:decoration-accent transition-colors duration-200"
-          href="/"
+          href={`/note/${note.slug}`}
         >
           {note.title}
         </Link>
@@ -30,7 +30,7 @@ function NoteItem(props: NoteItemProps) {
           {note.tags?.map((tag) => <span key={tag}>#{tag}</span>)}
         </div>
       </div>
-      <time className="block text-sm text-foreground-secondary">
+      <time className="block font-light text-sm text-foreground-secondary">
         {formatTimestampToHumanReadableDate(note.publishedAt)}
       </time>
     </div>

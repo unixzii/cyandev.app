@@ -1,0 +1,104 @@
+.cyan-reader {
+  p {
+    @apply font-light text-lg mb-4;
+  }
+
+  blockquote {
+    @apply my-6 p-4;
+    border: 1px solid var(--cyan-border-stronger-color);
+    border-radius: 12px;
+  }
+
+  blockquote > p {
+    @apply mb-2;
+  }
+
+  blockquote > p:last-child {
+    @apply mb-0;
+  }
+
+  ul,
+  ol {
+    @apply pl-4 mb-2;
+
+    li {
+      @apply pl-1;
+
+      &::marker {
+        @apply font-light text-accent text-sm;
+      }
+    }
+
+    p {
+      @apply mb-1;
+    }
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    @apply relative font-serif text-accent;
+
+    &::before {
+      content: "#";
+      display: flex;
+      position: absolute;
+      left: -30px;
+      top: 8px;
+      width: 20px;
+      height: 20px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--cyan-border-stronger-color);
+      border-radius: 4px;
+      opacity: 0;
+      pointer-events: none;
+
+      @apply font-mono text-xs transition-opacity duration-200;
+    }
+
+    &:hover::before {
+      opacity: 1;
+    }
+  }
+
+  h1 {
+    @apply text-3xl mt-8 mb-4;
+  }
+
+  h2 {
+    @apply text-xl mt-6 mb-4;
+
+    &::before {
+      top: 5px;
+    }
+  }
+
+  h3,
+  h4,
+  h5 {
+    @apply text-lg mb-4;
+
+    &::before {
+      top: 4px;
+    }
+  }
+
+  a {
+    @apply text-accent underline decoration-transparent hover:decoration-accent transition-colors duration-200;
+  }
+
+  strong {
+    @apply font-bold;
+  }
+}
