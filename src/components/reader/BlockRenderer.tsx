@@ -1,7 +1,8 @@
 import { createElement } from "react";
-import { BlockObject, CodeBlockObject } from "./types";
+import { BlockObject, CodeBlockObject, ImageObject } from "./types";
 import { InlineRenderer } from "./InlineRenderer";
 import { CodeBlockRenderer } from "./CodeBlockRenderer";
+import { ImageRenderer } from "./ImageRenderer";
 
 export interface BlockRendererProps {
   block: BlockObject;
@@ -21,7 +22,7 @@ function ParagraphRenderer(props: BlockRendererProps) {
   const { children, markDefs } = block;
 
   const childNodes = children.map((obj) => (
-    <InlineRenderer object={obj} markDefs={markDefs} />
+    <InlineRenderer key={obj._key} object={obj} markDefs={markDefs} />
   ));
 
   const { style, _key } = block;
@@ -47,7 +48,7 @@ export function BlockquoteRenderer(props: BlockquoteRendererProps) {
   return (
     <blockquote>
       {blocks.map((block) => (
-        <ParagraphRenderer block={block} />
+        <ParagraphRenderer key={block._key} block={block} />
       ))}
     </blockquote>
   );
@@ -60,7 +61,7 @@ export function ListRenderer(props: ListRendererProps) {
     listStyle === "number" ? "ol" : "ul",
     undefined,
     blocks.map((block) => (
-      <li>
+      <li key={block._key}>
         <ParagraphRenderer block={block} />
       </li>
     ))
@@ -73,6 +74,8 @@ export function BlockRenderer(props: BlockRendererProps) {
     return <ParagraphRenderer block={block} />;
   } else if (block._type === "code") {
     return <CodeBlockRenderer block={block as unknown as CodeBlockObject} />;
+  } else if (block._type === "image") {
+    return <ImageRenderer block={block as unknown as ImageObject} />;
   }
 
   return null;

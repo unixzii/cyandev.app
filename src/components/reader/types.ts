@@ -16,6 +16,13 @@ export type CodeBlockObject = TypedObject & {
   highlightedLines?: number[];
 };
 
+export type ImageObject = TypedObject & {
+  asset: {
+    _ref: string;
+    _type: string;
+  };
+};
+
 export type InlineObject = TypedObject & {
   marks: string[];
   text: string;

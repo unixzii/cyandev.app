@@ -25,7 +25,7 @@
 
   ul,
   ol {
-    @apply pl-4 mb-2;
+    @apply pl-4 my-4;
 
     li {
       @apply pl-1;
@@ -116,7 +116,7 @@
   }
 
   code {
-    @apply flex flex-col text-sm bg-transparent p-0 min-w-full w-fit;
+    @apply flex flex-col text-sm text-foreground bg-transparent p-0 min-w-full w-fit;
   }
 
   .line {
