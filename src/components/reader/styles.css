@@ -25,7 +25,7 @@
 
   ul,
   ol {
-    @apply pl-4 my-4;
+    @apply pl-5 my-4;
 
     li {
       @apply pl-1;
@@ -55,21 +55,23 @@
   h5 {
     @apply relative font-serif text-accent;
 
-    &::before {
-      content: "#";
-      left: -30px;
-      top: 8px;
-      width: 20px;
-      height: 20px;
-      border: 1px solid var(--cyan-border-stronger-color);
-      border-radius: 4px;
-      background-color: var(--cyan-reader-surface-color);
+    @media (min-width: 800px) {
+      &::before {
+        content: "#";
+        left: -30px;
+        top: 8px;
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--cyan-border-stronger-color);
+        border-radius: 4px;
+        background-color: var(--cyan-reader-surface-color);
 
-      @apply absolute flex items-center justify-center font-serif text-xs shadow opacity-0 transition-opacity duration-200 pointer-events-none;
-    }
+        @apply absolute flex items-center justify-center font-serif text-xs shadow opacity-0 transition-opacity duration-200 pointer-events-none;
+      }
 
-    &:hover::before {
-      opacity: 1;
+      &:hover::before {
+        opacity: 1;
+      }
     }
   }
 
@@ -104,7 +106,7 @@
   }
 
   code {
-    @apply relative px-1 bg-accent-alt/10 text-accent font-mono font-light;
+    @apply relative px-1 bg-accent-alt/10 text-accent rounded-md font-mono font-light;
   }
 }
 
