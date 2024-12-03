@@ -28,14 +28,5 @@ export default function buildMetadata(metadata: Metadata): NextMetadata {
       site: "@unixzii",
       card: ogImage ? "summary_large_image" : "summary",
     },
-    viewport: {
-      width: "device-width",
-      initialScale: 1,
-      viewportFit: "cover",
-    },
-    themeColor: "#78B3CE",
-    other: {
-      "msapplication-TileColor": "#78B3CE",
-    },
   };
 }

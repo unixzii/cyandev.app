@@ -29,6 +29,18 @@ export const metadata = buildMetadata({});
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en">
+      <head>
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: light)"
+          content="#78b3ce"
+        />
+        <meta
+          name="theme-color"
+          media="(prefers-color-scheme: dark)"
+          content="#80b8c6"
+        />
+      </head>
       <body
         className={`${sansFont.className} ${serifFont.variable} ${monoFont.variable}`}
       >
