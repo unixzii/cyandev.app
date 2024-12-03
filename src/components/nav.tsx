@@ -20,7 +20,7 @@ import me from "../../data/me.json";
 import "./nav.css";
 
 function useIsMobileMode() {
-  return useMediaQuery("(max-width: 640px)");
+  return useMediaQuery("(max-width: 640px)", false);
 }
 
 interface NavLinkProps {
@@ -59,6 +59,7 @@ const NavLink = memo((props: NavLinkProps) => {
     </Link>
   );
 });
+NavLink.displayName = "NavLink";
 
 interface NavLinksProps {
   className?: string;
@@ -95,6 +96,7 @@ const NavLinks = memo((props: NavLinksProps) => {
     </div>
   );
 });
+NavLinks.displayName = "NavLinks";
 
 interface MobileMenuProps {
   onExpandChanged(height?: number): void;
@@ -145,6 +147,7 @@ const MobileMenu = memo((props: MobileMenuProps) => {
     </div>
   );
 });
+MobileMenu.displayName = "MobileMenu";
 
 export function NavBar() {
   const isMobileMode = useIsMobileMode();

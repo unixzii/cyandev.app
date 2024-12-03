@@ -2,7 +2,8 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 
-export default function useMediaQuery(query: string) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function useMediaQuery_client(query: string, ssrValue?: boolean) {
   const { subscribe, getSnapshot } = useMemo(() => {
     const queryList = window.matchMedia(query);
     return {
@@ -19,3 +20,11 @@ export default function useMediaQuery(query: string) {
   }, [query]);
   return useSyncExternalStore(subscribe, getSnapshot);
 }
+
+function useMediaQuery_server(query: string, ssrValue?: boolean) {
+  return ssrValue ?? false;
+}
+
+export default typeof window !== "undefined"
+  ? useMediaQuery_client
+  : useMediaQuery_server;
