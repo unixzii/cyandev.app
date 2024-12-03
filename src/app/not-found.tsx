@@ -1,6 +1,3 @@
-import { RevealHighlightPlatter } from "@/components/reveal-highlight";
-import { Button } from "@/components/button";
-import { Icon } from "@/components/icon";
 import { buildMetadata } from "@/utils";
 
 export const metadata = buildMetadata({
@@ -20,29 +17,6 @@ export default function NotFound() {
           </span>
           <span className="animate-glitch-blink"> 404</span>
         </div>
-      </div>
-      <div className="pt-16 md:px-24 md:py-16 md:opacity-60 md:hover:opacity-100 md:transition-opacity md:duration-500">
-        <RevealHighlightPlatter>
-          <Button
-            extraClassName="!py-2"
-            title="Back"
-            aria-label="Back"
-            /*onClick={() => history.back()}*/
-          >
-            <Icon icon="arrowLeft" size="lg" />
-          </Button>
-          <div className="inline-block w-0.5 h-3 mx-2 bg-border" />
-          <Button
-            elementType="a"
-            extraClassName="!py-2"
-            title="Home"
-            aria-label="Home"
-            /* FIXME: router not working here. */
-            href="/"
-          >
-            <Icon icon="house" className="text-base" />
-          </Button>
-        </RevealHighlightPlatter>
       </div>
     </main>
   );
