@@ -6,17 +6,22 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  memo,
 } from "react";
 import Link from "next/link";
 import { useSpring, animated } from "@react-spring/web";
 import invariant from "invariant";
-import { selectClass } from "@/utils";
+import { selectClass, useMediaQuery } from "@/utils";
 import { Icon } from "@/components/icon";
 import { ReadableArea } from "./adaptive-containers";
 import { RevealHighlightPlatter, useRevealHighlight } from "./reveal-highlight";
 import me from "../../data/me.json";
 
 import "./nav.css";
+
+function useIsMobileMode() {
+  return useMediaQuery("(max-width: 640px)");
+}
 
 interface NavLinkProps {
   title: string;
@@ -25,7 +30,7 @@ interface NavLinkProps {
   mobile?: boolean;
 }
 
-function NavLink(props: NavLinkProps) {
+const NavLink = memo((props: NavLinkProps) => {
   const { title, icon, href, mobile } = props;
 
   const { targetProps } = useRevealHighlight({
@@ -53,23 +58,23 @@ function NavLink(props: NavLinkProps) {
       )}
     </Link>
   );
-}
+});
 
 interface NavLinksProps {
   className?: string;
   mobile?: boolean;
 }
 
-function NavLinks(props: NavLinksProps) {
+const NavLinks = memo((props: NavLinksProps) => {
   const { mobile, className } = props;
   return (
     <div
       className={selectClass(
         {
-          "hidden sm:flex flex-1": !mobile,
-          "flex flex-col gap-4 pb-4": mobile,
+          "flex-col gap-4 pb-4": mobile,
+          "flex-1": !mobile,
         },
-        "font-light text-foreground-secondary" +
+        "flex font-light text-foreground-secondary" +
           (className ? ` ${className}` : "")
       )}
     >
@@ -89,28 +94,29 @@ function NavLinks(props: NavLinksProps) {
       </div>
     </div>
   );
-}
+});
 
 interface MobileMenuProps {
   onExpandChanged(height?: number): void;
 }
 
-function MobileMenu(props: MobileMenuProps) {
-  const [expanded, setExpanded] = useState(false);
+const MobileMenu = memo((props: MobileMenuProps) => {
+  const { onExpandChanged } = props;
 
+  const [expanded, setExpanded] = useState(false);
   const menuInnerElementRef = useRef<HTMLDivElement>(null);
 
   function toggleExpanded() {
-    setExpanded(!expanded);
-    let targetHeight = 0;
-    if (!expanded) {
-      targetHeight = menuInnerElementRef.current!!.clientHeight;
-    }
-    props.onExpandChanged(targetHeight);
+    const newValue = !expanded;
+    setExpanded(newValue);
+    const targetHeight = newValue
+      ? menuInnerElementRef.current!!.clientHeight
+      : 0;
+    onExpandChanged(targetHeight);
   }
 
   return (
-    <div className="flex sm:hidden flex-1">
+    <div className="flex flex-1">
       <div className="flex-1" />
       <button className="p-[4px]" onClick={toggleExpanded}>
         <div
@@ -138,9 +144,10 @@ function MobileMenu(props: MobileMenuProps) {
       </div>
     </div>
   );
-}
+});
 
 export function NavBar() {
+  const isMobileMode = useIsMobileMode();
   const [hairlineVisible, setHairlineVisible] = useState(false);
   const scrollDetectorElementRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -180,6 +187,12 @@ export function NavBar() {
     [setExpanded, springApi]
   );
 
+  useLayoutEffect(() => {
+    if (!isMobileMode) {
+      handleExpandChanged(0);
+    }
+  }, [isMobileMode, handleExpandChanged]);
+
   return (
     <Fragment>
       <animated.nav
@@ -195,10 +208,13 @@ export function NavBar() {
       >
         <ReadableArea className="flex items-center h-[52px]">
           <span className="font-bold cursor-default mr-3">Cyandev</span>
-          <RevealHighlightPlatter>
-            <NavLinks />
-          </RevealHighlightPlatter>
-          <MobileMenu onExpandChanged={handleExpandChanged} />
+          {isMobileMode ? (
+            <MobileMenu onExpandChanged={handleExpandChanged} />
+          ) : (
+            <RevealHighlightPlatter>
+              <NavLinks />
+            </RevealHighlightPlatter>
+          )}
         </ReadableArea>
       </animated.nav>
       <div className="h-16" ref={scrollDetectorElementRef} />
