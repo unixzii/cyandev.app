@@ -18,21 +18,24 @@ interface NoteItemProps {
 function NoteItem(props: NoteItemProps) {
   const { note } = props;
   return (
-    <div className="py-3">
-      <div className="mb-1">
-        <Link
-          className="mr-2 text-lg underline decoration-transparent hover:decoration-accent transition-colors duration-200"
-          href={`/note/${note.slug}`}
-        >
-          {note.title}
-        </Link>
-        <div className="inline-flex flex-wrap gap-2 text-sm text-foreground-tertiary">
-          {note.tags?.map((tag) => <span key={tag}>#{tag}</span>)}
-        </div>
+    <div className="mb-8">
+      <Link
+        className="block mb-2 font-semibold text-lg underline decoration-transparent hover:decoration-accent transition-colors duration-200"
+        href={`/note/${note.slug}`}
+      >
+        {note.title}
+      </Link>
+      <h2 className="mb-1.5 font-light text-sm">{note.subtitle}</h2>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <time className="inline-block font-light text-foreground-secondary mr-1">
+          {formatTimestampToHumanReadableDate(note.publishedAt)}
+        </time>
+        {note.tags?.map((tag) => (
+          <span key={tag} className="text-foreground-tertiary">
+            #{tag}
+          </span>
+        ))}
       </div>
-      <time className="block font-light text-sm text-foreground-secondary">
-        {formatTimestampToHumanReadableDate(note.publishedAt)}
-      </time>
     </div>
   );
 }

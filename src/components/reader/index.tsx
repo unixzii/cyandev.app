@@ -5,10 +5,12 @@ import {
   BlockquoteRenderer,
   ListRenderer,
 } from "./BlockRenderer";
+import { selectClass } from "@/utils";
 
 import "./styles.css";
 
 export interface ReaderProps {
+  className?: string;
   body: unknown;
 }
 
@@ -34,7 +36,7 @@ function getBlockType(block: BlockObject): BlockType {
 }
 
 export function Reader(props: ReaderProps) {
-  const { body } = props;
+  const { className, body } = props;
   const blocks = body as BlockObject[];
 
   let blockGroup: BlockObject[] = [];
@@ -82,5 +84,9 @@ export function Reader(props: ReaderProps) {
 
   flushBlockGroup();
 
-  return <article className="cyan-reader">{childNodes}</article>;
+  return (
+    <article className={selectClass({ "cyan-reader": true }, className)}>
+      {childNodes}
+    </article>
+  );
 }

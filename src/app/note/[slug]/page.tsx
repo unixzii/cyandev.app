@@ -19,12 +19,18 @@ export default async function Page(props: PageProps) {
 
   return (
     <ReadableArea hasVerticalMargins>
-      <h1 className="font-serif text-4xl text-accent mb-3">{note.title}</h1>
-      <time className="block font-light text-sm text-foreground-secondary">
-        {formatTimestampToHumanReadableDate(note.publishedAt)}
-      </time>
-      <main className="mt-8">
-        <Reader body={note.body} />
+      <main>
+        <header>
+          <time className="block font-light text-sm text-foreground-secondary">
+            {formatTimestampToHumanReadableDate(note.publishedAt)}
+          </time>
+          <h1 className="font-serif text-4xl text-accent mt-3 mb-5">
+            {note.title}
+          </h1>
+          <h2 className="text-xl font-light">{note.subtitle}</h2>
+        </header>
+
+        <Reader className="mt-12" body={note.body} />
       </main>
     </ReadableArea>
   );
