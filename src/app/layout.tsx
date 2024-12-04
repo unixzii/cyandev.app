@@ -10,6 +10,7 @@ import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { GrainTextureBackground } from "@/components/background-textures";
+import { LoadingBarContainer } from "@/components/loading-bar";
 
 const sansFont = Inter({ subsets: ["latin"] });
 const serifFallbackFont = Noto_Serif_SC({
@@ -52,10 +53,12 @@ export default function RootLayout({ children }: PropsWithChildren) {
     <html lang="en">
       <body className={fontClassNames}>
         <div className="relative min-h-screen">
-          <GrainTextureBackground />
-          <NavBar />
-          <div>{children}</div>
-          <Footer />
+          <LoadingBarContainer>
+            <GrainTextureBackground />
+            <NavBar />
+            <div>{children}</div>
+            <Footer />
+          </LoadingBarContainer>
         </div>
       </body>
       <Analytics />

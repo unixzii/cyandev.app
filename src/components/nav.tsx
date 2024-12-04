@@ -8,11 +8,11 @@ import {
   useState,
   memo,
 } from "react";
-import Link from "next/link";
 import { useSpring, animated } from "@react-spring/web";
 import invariant from "invariant";
 import { selectClass, useMediaQuery } from "@/utils";
 import { Icon } from "@/components/icon";
+import { Link } from "./link";
 import { ReadableArea } from "./adaptive-containers";
 import { RevealHighlightPlatter, useRevealHighlight } from "./reveal-highlight";
 import me from "../../data/me.json";
