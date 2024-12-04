@@ -72,10 +72,10 @@ const NavLinks = memo((props: NavLinksProps) => {
     <div
       className={selectClass(
         {
-          "flex-col gap-4 pb-4": mobile,
-          "flex-1": !mobile,
+          "flex flex-col gap-4 pb-4": mobile,
+          "hidden sm:flex flex-1": !mobile,
         },
-        "flex font-light text-foreground-secondary" +
+        "font-light text-foreground-secondary" +
           (className ? ` ${className}` : "")
       )}
     >
