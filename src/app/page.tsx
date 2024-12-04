@@ -20,7 +20,7 @@ function NoteItem(props: NoteItemProps) {
   return (
     <div className="mb-8">
       <Link
-        className="block mb-2 font-semibold text-lg underline decoration-transparent hover:decoration-accent transition-colors duration-200"
+        className="block mb-1.5 font-semibold text-xl underline decoration-transparent hover:decoration-accent transition-colors duration-200"
         href={`/note/${note.slug}`}
       >
         {note.title}
