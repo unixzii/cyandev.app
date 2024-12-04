@@ -40,8 +40,8 @@ faConfig.autoAddCss = false;
 
 export const viewport: Viewport = {
   themeColor: [
-    { color: "#78b3ce", media: "(prefers-color-scheme: light)" },
-    { color: "#80b8c6", media: "(prefers-color-scheme: dark)" },
+    { color: "#ffffff", media: "(prefers-color-scheme: light)" },
+    { color: "#232323", media: "(prefers-color-scheme: dark)" },
   ],
   viewportFit: "cover",
 };
