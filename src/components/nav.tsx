@@ -149,6 +149,30 @@ const MobileMenu = memo((props: MobileMenuProps) => {
 });
 MobileMenu.displayName = "MobileMenu";
 
+const NavBarContents = memo(
+  ({
+    isMobileMode,
+    onExpandChanged,
+  }: {
+    isMobileMode: boolean;
+    onExpandChanged: (height?: number) => void;
+  }) => {
+    return (
+      <ReadableArea className="flex items-center h-[52px]">
+        <span className="font-bold cursor-default mr-3">Cyandev</span>
+        {isMobileMode ? (
+          <MobileMenu onExpandChanged={onExpandChanged} />
+        ) : (
+          <RevealHighlightPlatter>
+            <NavLinks />
+          </RevealHighlightPlatter>
+        )}
+      </ReadableArea>
+    );
+  }
+);
+NavBarContents.displayName = "NavBarContents";
+
 export function NavBar() {
   const isMobileMode = useIsMobileMode();
   const [hairlineVisible, setHairlineVisible] = useState(false);
@@ -209,18 +233,16 @@ export function NavBar() {
         )}
         style={{ height: springValues.height }}
       >
-        <ReadableArea className="flex items-center h-[52px]">
-          <span className="font-bold cursor-default mr-3">Cyandev</span>
-          {isMobileMode ? (
-            <MobileMenu onExpandChanged={handleExpandChanged} />
-          ) : (
-            <RevealHighlightPlatter>
-              <NavLinks />
-            </RevealHighlightPlatter>
-          )}
-        </ReadableArea>
+        <NavBarContents
+          isMobileMode={isMobileMode}
+          onExpandChanged={handleExpandChanged}
+        />
       </animated.nav>
-      <div className="h-16" ref={scrollDetectorElementRef} />
+      <div
+        id="scrollDetector"
+        className="absolute top-0 w-full h-[1px]"
+        ref={scrollDetectorElementRef}
+      />
     </Fragment>
   );
 }

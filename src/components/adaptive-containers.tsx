@@ -15,7 +15,7 @@ export const ReadableArea: FC<PropsWithChildren<ReadableAreaProps>> = ({
       className={selectClass(
         {
           "mx-auto max-w-3xl px-6": true,
-          "my-16": hasVerticalMargins,
+          "py-16": hasVerticalMargins,
         },
         className
       )}

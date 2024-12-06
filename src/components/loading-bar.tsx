@@ -35,10 +35,11 @@ function LoadingBar(props: LoadingBarProps) {
     } else {
       width.start("100%");
     }
-  }, [active]);
+  }, [width, active]);
 
   return (
     <animated.div
+      id="loadingBar"
       className={selectClass(
         {
           "duration-150": active,

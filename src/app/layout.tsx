@@ -8,7 +8,6 @@ import { Inter, Noto_Serif, Noto_Serif_SC, Geist_Mono } from "next/font/google";
 import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
-import { Footer } from "@/components/footer";
 import { GrainTextureBackground } from "@/components/background-textures";
 import { LoadingBarContainer } from "@/components/loading-bar";
 
@@ -52,12 +51,11 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en">
       <body className={fontClassNames}>
-        <div className="relative min-h-screen">
+        <div id="appMain" className="relative flow-root">
+          <GrainTextureBackground />
           <LoadingBarContainer>
-            <GrainTextureBackground />
             <NavBar />
-            <div>{children}</div>
-            <Footer />
+            {children}
           </LoadingBarContainer>
         </div>
       </body>

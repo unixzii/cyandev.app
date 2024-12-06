@@ -1,4 +1,4 @@
-import { redirect, RedirectType } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Reader } from "@/components/reader";
 import { ReadableArea } from "@/components/adaptive-containers";
 import { client as sanityClient } from "@/sanity";
@@ -14,7 +14,7 @@ export default async function Page(props: PageProps) {
 
   const note = await getNote(sanityClient, slug);
   if (!note) {
-    return redirect("/not-found", RedirectType.replace);
+    notFound();
   }
 
   return (

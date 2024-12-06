@@ -1,18 +1,3 @@
-function createGlitchBlinkKeyframes(passive) {
-  return {
-    "0%, 30%, 34%, 40%, 44%, 65%": { opacity: 0 },
-    "70%, 95%": { opacity: passive ? 0.05 : 0.1 },
-    "33%, 43%, 100%": {
-      opacity: 1,
-      ...(passive
-        ? {}
-        : {
-            textShadow: "0px 1px 20px rgb(255 255 255 / 69%)",
-          }),
-    },
-  };
-}
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -36,21 +21,24 @@ module.exports = {
         "reveal-highlight": "var(--cyan-reveal-highlight-color)",
       },
       animation: {
-        "smooth-blink": "smoothBlink 1s linear infinite",
         "glitch-blink": "glitchBlink 2s linear both",
-        "glitch-blink-passive": "glitchBlinkPassive 2s linear both",
       },
       fontFamily: {
         "serif": "var(--cyan-serif-font)",
         "mono": "var(--cyan-mono-font)",
       },
       keyframes: {
-        smoothBlink: {
-          "0%, 40%, 100%": { opacity: 1 },
-          "55%, 90%": { opacity: 0 },
+        glitchBlink: {
+          "0%, 30%, 34%, 40%, 44%, 65%": { opacity: 0 },
+          "70%, 98%": {
+            opacity: 0.3,
+            textShadow: "0px 0px 30px rgb(255 255 255 / 90%)",
+          },
+          "33%, 43%, 100%": {
+            opacity: 1,
+            textShadow: "0px 0px 50px rgb(255 255 255 / 80%)",
+          },
         },
-        glitchBlink: createGlitchBlinkKeyframes(false),
-        glitchBlinkPassive: createGlitchBlinkKeyframes(true),
       },
     },
   },
