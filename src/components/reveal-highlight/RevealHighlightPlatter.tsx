@@ -81,26 +81,25 @@ export function RevealHighlightPlatter(props: React.PropsWithChildren<{}>) {
   const { hoveredElement, pressedElement, insets } = state;
   const insetWidth = insets[0];
   const insetHeight = insets[1];
-  const hoveredElementBoundingRect = useMemo(() => {
+  const hoveredElementRect = useMemo(() => {
     if (hoveredElement) {
-      const rect = hoveredElement.getBoundingClientRect();
       return {
-        x: rect.x - insetWidth,
-        y: rect.y - insetHeight,
-        width: rect.width + insetWidth * 2,
-        height: rect.height + insetHeight * 2,
+        top: hoveredElement.offsetTop - insetHeight,
+        left: hoveredElement.offsetLeft - insetWidth,
+        width: hoveredElement.offsetWidth + insetWidth * 2,
+        height: hoveredElement.offsetHeight + insetHeight * 2,
       };
     }
-    return { x: 0, y: 0, width: 0, height: 0 };
+    return { top: 0, left: 0, width: 0, height: 0 };
   }, [hoveredElement, insetWidth, insetHeight]);
 
   return (
     <RevealHighlightPlatterContextProvider value={context}>
       <DefaultRevealHighlight
-        width={hoveredElementBoundingRect.width}
-        height={hoveredElementBoundingRect.height}
-        top={hoveredElementBoundingRect.y}
-        left={hoveredElementBoundingRect.x}
+        width={hoveredElementRect.width}
+        height={hoveredElementRect.height}
+        top={hoveredElementRect.top}
+        left={hoveredElementRect.left}
         visible={!!hoveredElement}
         pressed={!!pressedElement && hoveredElement === pressedElement}
       />

@@ -8,7 +8,7 @@ import {
   useState,
   memo,
 } from "react";
-import { useSpring, animated } from "@react-spring/web";
+import { motion } from "motion/react";
 import invariant from "invariant";
 import { selectClass, useMediaQuery } from "@/utils";
 import { Icon } from "@/components/icon";
@@ -194,25 +194,14 @@ export function NavBar() {
     };
   }, [scrollDetectorElementRef, setHairlineVisible]);
 
-  const [expanded, setExpanded] = useState(false);
-  const [springValues, springApi] = useSpring(() => {
-    return {
-      height: 52,
-    };
-  }, []);
+  const [extraHeight, setExtraHeight] = useState(0);
   const handleExpandChanged = useCallback(
     (height?: number) => {
-      setExpanded(height ? true : false);
-      springApi.start({
-        to: { height: 52 + (height ?? 0) },
-        config: {
-          tension: 400,
-          friction: 40,
-        },
-      });
+      setExtraHeight(height ?? 0);
     },
-    [setExpanded, springApi]
+    [setExtraHeight]
   );
+  const expanded = extraHeight > 0;
 
   useLayoutEffect(() => {
     if (!isMobileMode) {
@@ -222,7 +211,7 @@ export function NavBar() {
 
   return (
     <Fragment>
-      <animated.nav
+      <motion.nav
         className={selectClass(
           {
             "border-border bg-backdrop-tint backdrop-blur":
@@ -231,13 +220,14 @@ export function NavBar() {
           },
           "fixed top-0 w-full z-50 border-b transition-colors duration-500 overflow-hidden"
         )}
-        style={{ height: springValues.height }}
+        animate={{ height: extraHeight + 52 }}
+        transition={{ type: "spring", duration: 0.5, bounce: 0 }}
       >
         <NavBarContents
           isMobileMode={isMobileMode}
           onExpandChanged={handleExpandChanged}
         />
-      </animated.nav>
+      </motion.nav>
       <div
         id="scrollDetector"
         className="absolute top-0 w-full h-[1px]"

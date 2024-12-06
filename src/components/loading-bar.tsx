@@ -10,7 +10,7 @@ import {
   useContext,
   useEffect,
 } from "react";
-import { animated, useSpringValue } from "@react-spring/web";
+import { motion, useSpring, useTransform } from "motion/react";
 import { selectClass } from "@/utils";
 
 interface LoadingBarProps {
@@ -19,26 +19,20 @@ interface LoadingBarProps {
 
 function LoadingBar(props: LoadingBarProps) {
   const { active } = props;
-  const width = useSpringValue("100%", {
-    config: {
-      mass: 1,
-      friction: 51,
-      tension: 500,
-      precision: 0.001,
-    },
-  });
+  const widthPercent = useSpring(1, { duration: 400, bounce: 0 });
+  const width = useTransform(widthPercent, (value) => `${value * 100}%`);
 
   useEffect(() => {
     if (active) {
-      width.set("0%");
-      width.start("70%");
+      widthPercent.jump(0, true);
+      widthPercent.set(0.7);
     } else {
-      width.start("100%");
+      widthPercent.set(1);
     }
-  }, [width, active]);
+  }, [widthPercent, active]);
 
   return (
-    <animated.div
+    <motion.div
       id="loadingBar"
       className={selectClass(
         {
@@ -50,7 +44,7 @@ function LoadingBar(props: LoadingBarProps) {
       style={{ width }}
     >
       <div className="absolute right-0 h-[2px] w-[2px] rounded-[1px] shadow-sm shadow-[#85d8ff] dark:shadow-[#70e2ff] bg-[#85d8ff] dark:bg-[#70e2ff]" />
-    </animated.div>
+    </motion.div>
   );
 }
 
