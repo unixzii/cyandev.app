@@ -2,6 +2,7 @@ import { codeToHtml } from "shiki";
 import { CodeBlockObject } from "@/data/block-types";
 
 export interface CodeBlockRendererProps {
+  containerKey: string | null;
   block: CodeBlockObject;
 }
 

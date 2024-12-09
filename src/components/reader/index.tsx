@@ -41,6 +41,7 @@ export function Reader(props: ReaderProps) {
   const { className, body } = props;
   const blocks = body as BlockObject[];
 
+  let currentContainerKey: string | null = null;
   let blockGroup: BlockObject[] = [];
   const childNodes: ReactNode[] = [];
 
@@ -58,6 +59,7 @@ export function Reader(props: ReaderProps) {
       childNodes.push(
         <BlockquoteRenderer
           key={key}
+          containerKey={currentContainerKey}
           blocks={blockGroup as NormalBlockObject[]}
         />
       );
@@ -66,21 +68,38 @@ export function Reader(props: ReaderProps) {
       childNodes.push(
         <ListRenderer
           key={key}
+          containerKey={currentContainerKey}
           blocks={blockGroup as NormalBlockObject[]}
           listStyle={firstBlockInGroup.listItem}
         />
       );
     } else {
       for (const block of blockGroup) {
-        childNodes.push(<BlockRenderer key={block._key} block={block} />);
+        childNodes.push(
+          <BlockRenderer
+            key={block._key}
+            containerKey={currentContainerKey}
+            block={block}
+          />
+        );
       }
     }
 
     blockGroup = [];
   }
 
-  // Merge adjacent blockquote and list blocks.
   for (const block of blocks) {
+    if (
+      block._type === "block" &&
+      (block.style === "h1" || block.style === "h2")
+    ) {
+      const thisContainerKey = block._key;
+      if (currentContainerKey !== thisContainerKey) {
+        flushBlockGroup();
+      }
+      currentContainerKey = thisContainerKey;
+    }
+
     if (blockGroup.length > 0) {
       const lastBlockType = getBlockType(blockGroup[blockGroup.length - 1]);
       const thisBlockType = getBlockType(block);
@@ -89,6 +108,7 @@ export function Reader(props: ReaderProps) {
       }
     }
 
+    // Merge adjacent blockquote and list blocks.
     blockGroup.push(block);
   }
 

@@ -10,19 +10,25 @@ import { CodeBlockRenderer } from "./CodeBlockRenderer";
 import { ImageRenderer } from "./ImageRenderer";
 
 export interface BlockRendererProps {
+  containerKey: string | null;
   block: BlockObject;
 }
 
 export interface BlockquoteRendererProps {
+  containerKey: string | null;
   blocks: NormalBlockObject[];
 }
 
 export interface ListRendererProps {
+  containerKey: string | null;
   blocks: NormalBlockObject[];
   listStyle: NormalBlockObject["listItem"];
 }
 
-function ParagraphRenderer(props: { block: NormalBlockObject }) {
+function ParagraphRenderer(props: {
+  containerKey?: string | null;
+  block: NormalBlockObject;
+}) {
   const { block } = props;
   const { children, markDefs } = block;
 
@@ -74,13 +80,20 @@ export function ListRenderer(props: ListRendererProps) {
 }
 
 export function BlockRenderer(props: BlockRendererProps) {
-  const { block } = props;
+  const { containerKey, block } = props;
   if (block._type === "block") {
-    return <ParagraphRenderer block={block} />;
+    return <ParagraphRenderer containerKey={containerKey} block={block} />;
   } else if (block._type === "code") {
-    return <CodeBlockRenderer block={block as CodeBlockObject} />;
+    return (
+      <CodeBlockRenderer
+        containerKey={containerKey}
+        block={block as CodeBlockObject}
+      />
+    );
   } else if (block._type === "image") {
-    return <ImageRenderer block={block as ImageObject} />;
+    return (
+      <ImageRenderer containerKey={containerKey} block={block as ImageObject} />
+    );
   }
 
   return null;

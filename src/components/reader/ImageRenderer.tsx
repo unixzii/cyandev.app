@@ -7,6 +7,7 @@ const imageUrlBuilder = createImageUrlBuilder({
 });
 
 export interface ImageRendererProps {
+  containerKey: string | null;
   block: ImageObject;
 }
 
