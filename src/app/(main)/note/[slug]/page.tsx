@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/reader";
 import { ReadableArea } from "@/components/adaptive-containers";
-import { client as sanityClient } from "@/sanity";
-import { get as getNote } from "@/sanity/notes";
+import { sanityClient } from "@/data";
+import { get as getNote } from "@/data/notes";
 import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
 
 interface PageProps {

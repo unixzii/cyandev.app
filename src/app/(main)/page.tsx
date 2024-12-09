@@ -1,6 +1,6 @@
 import { ReadableArea } from "@/components/adaptive-containers";
-import { client as sanityClient } from "@/sanity";
-import { list as listNotes, Note } from "@/sanity/notes";
+import { sanityClient } from "@/data";
+import { list as listNotes, Note } from "@/data/notes";
 import { Link } from "@/components/link";
 import { buildMetadata } from "@/utils";
 import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";

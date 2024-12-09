@@ -18,6 +18,14 @@ export const FullNoteSchema = NoteSchema.extend({
 export type Note = z.infer<typeof NoteSchema>;
 export type FullNote = z.infer<typeof FullNoteSchema>;
 
+function delay() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, 2000);
+  });
+}
+
 export async function list(client: SanityClient): Promise<Note[]> {
   const notes = await client.fetch(
     `*[_type=="note"]{_id, title, subtitle, slug, tags, publishedAt} | order(publishedAt desc)`,
@@ -31,6 +39,8 @@ export async function get(
   client: SanityClient,
   slug: string
 ): Promise<FullNote | null> {
+  await delay();
+
   const note = await client.fetch(
     `*[_type == "note" && slug == $slug][0]`,
     { slug },
