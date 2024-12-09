@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { InlineObject, TypedObject } from "./types";
+import { InlineObject, TypedObject } from "@/data/block-types";
 
 export interface InlineRendererProps {
   object: InlineObject;

@@ -1,5 +1,10 @@
 import { createElement } from "react";
-import { BlockObject, CodeBlockObject, ImageObject } from "./types";
+import {
+  BlockObject,
+  NormalBlockObject,
+  CodeBlockObject,
+  ImageObject,
+} from "@/data/block-types";
 import { InlineRenderer } from "./InlineRenderer";
 import { CodeBlockRenderer } from "./CodeBlockRenderer";
 import { ImageRenderer } from "./ImageRenderer";
@@ -9,16 +14,16 @@ export interface BlockRendererProps {
 }
 
 export interface BlockquoteRendererProps {
-  blocks: BlockObject[];
+  blocks: NormalBlockObject[];
 }
 
 export interface ListRendererProps {
-  blocks: BlockObject[];
-  listStyle: BlockObject["listItem"];
+  blocks: NormalBlockObject[];
+  listStyle: NormalBlockObject["listItem"];
 }
 
-function ParagraphRenderer(props: BlockRendererProps) {
-  const block = props.block as BlockObject;
+function ParagraphRenderer(props: { block: NormalBlockObject }) {
+  const { block } = props;
   const { children, markDefs } = block;
 
   const childNodes = children.map((obj) => (
@@ -73,9 +78,9 @@ export function BlockRenderer(props: BlockRendererProps) {
   if (block._type === "block") {
     return <ParagraphRenderer block={block} />;
   } else if (block._type === "code") {
-    return <CodeBlockRenderer block={block as unknown as CodeBlockObject} />;
+    return <CodeBlockRenderer block={block as CodeBlockObject} />;
   } else if (block._type === "image") {
-    return <ImageRenderer block={block as unknown as ImageObject} />;
+    return <ImageRenderer block={block as ImageObject} />;
   }
 
   return null;

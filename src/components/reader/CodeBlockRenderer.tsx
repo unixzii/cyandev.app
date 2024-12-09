@@ -1,5 +1,5 @@
 import { codeToHtml } from "shiki";
-import { CodeBlockObject } from "./types";
+import { CodeBlockObject } from "@/data/block-types";
 
 export interface CodeBlockRendererProps {
   block: CodeBlockObject;

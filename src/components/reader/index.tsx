@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { BlockObject } from "./types";
+import { BlockObject, NormalBlockObject } from "@/data/block-types";
 import {
   BlockRenderer,
   BlockquoteRenderer,
@@ -25,11 +25,13 @@ type BlockType =
   | typeof NUMBER_LIST_TYPE;
 
 function getBlockType(block: BlockObject): BlockType {
-  if (block.listItem === "bullet") {
-    return BULLET_LIST_TYPE;
-  } else if (block.listItem === "number") {
-    return NUMBER_LIST_TYPE;
-  } else if (block.style === "blockquote") {
+  if ("listItem" in block) {
+    if (block.listItem === "bullet") {
+      return BULLET_LIST_TYPE;
+    } else if (block.listItem === "number") {
+      return NUMBER_LIST_TYPE;
+    }
+  } else if (block._type === "block" && block.style === "blockquote") {
     return BLOCKQUOTE_TYPE;
   }
   return NORMAL_BLOCK_TYPE;
@@ -48,15 +50,23 @@ export function Reader(props: ReaderProps) {
     }
 
     const firstBlockInGroup = blockGroup[0];
-    if (firstBlockInGroup.style === "blockquote") {
+    if (
+      firstBlockInGroup._type === "block" &&
+      firstBlockInGroup.style === "blockquote"
+    ) {
       const key = "_" + firstBlockInGroup._key;
-      childNodes.push(<BlockquoteRenderer key={key} blocks={blockGroup} />);
-    } else if (firstBlockInGroup.listItem) {
+      childNodes.push(
+        <BlockquoteRenderer
+          key={key}
+          blocks={blockGroup as NormalBlockObject[]}
+        />
+      );
+    } else if ("listItem" in firstBlockInGroup) {
       const key = "_" + firstBlockInGroup._key;
       childNodes.push(
         <ListRenderer
           key={key}
-          blocks={blockGroup}
+          blocks={blockGroup as NormalBlockObject[]}
           listStyle={firstBlockInGroup.listItem}
         />
       );

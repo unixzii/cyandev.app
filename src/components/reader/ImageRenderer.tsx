@@ -1,5 +1,5 @@
 import createImageUrlBuilder from "@sanity/image-url";
-import { ImageObject } from "./types";
+import { ImageObject } from "@/data/block-types";
 
 const imageUrlBuilder = createImageUrlBuilder({
   projectId: process.env.SANITY_PROJECT_ID!!,
