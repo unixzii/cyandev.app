@@ -1,10 +1,17 @@
 import { ReactNode } from "react";
-import { BlockObject, NormalBlockObject } from "@/data/block-types";
 import {
-  BlockRenderer,
+  BlockObject,
+  NormalBlockObject,
+  CodeBlockObject,
+  ImageObject,
+} from "@/data/block-types";
+import {
+  ParagraphRenderer,
   BlockquoteRenderer,
   ListRenderer,
-} from "./BlockRenderer";
+} from "./BlockRenderers";
+import { CodeBlockRenderer } from "./CodeBlockRenderer";
+import { ImageRenderer } from "./ImageRenderer";
 import { selectClass } from "@/utils";
 
 import "./styles.css";
@@ -35,6 +42,31 @@ function getBlockType(block: BlockObject): BlockType {
     return BLOCKQUOTE_TYPE;
   }
   return NORMAL_BLOCK_TYPE;
+}
+
+interface BlockRendererProps {
+  containerKey: string | null;
+  block: BlockObject;
+}
+
+function BlockRenderer(props: BlockRendererProps) {
+  const { containerKey, block } = props;
+  if (block._type === "block") {
+    return <ParagraphRenderer containerKey={containerKey} block={block} />;
+  } else if (block._type === "code") {
+    return (
+      <CodeBlockRenderer
+        containerKey={containerKey}
+        block={block as CodeBlockObject}
+      />
+    );
+  } else if (block._type === "image") {
+    return (
+      <ImageRenderer containerKey={containerKey} block={block as ImageObject} />
+    );
+  }
+
+  return null;
 }
 
 export function Reader(props: ReaderProps) {
@@ -120,3 +152,5 @@ export function Reader(props: ReaderProps) {
     </article>
   );
 }
+
+export { BlockVisibilityCollector } from "./BlockVisibilityCollector";

@@ -1,10 +1,23 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
+import useHydrationValue from "./useHydrationValue";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function useMediaQuery_client(query: string, ssrValue?: boolean) {
+const isServer = typeof window === "undefined";
+
+export default function useMediaQuery(query: string, ssrValue?: boolean) {
   const { subscribe, getSnapshot } = useMemo(() => {
+    if (isServer) {
+      return {
+        subscribe() {
+          return () => {};
+        },
+        getSnapshot() {
+          return ssrValue ?? false;
+        },
+      };
+    }
+
     const queryList = window.matchMedia(query);
     return {
       subscribe(callback: () => void) {
@@ -17,14 +30,7 @@ function useMediaQuery_client(query: string, ssrValue?: boolean) {
         return queryList.matches;
       },
     };
-  }, [query]);
-  return useSyncExternalStore(subscribe, getSnapshot);
+  }, [query, ssrValue]);
+  const matches = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useHydrationValue(matches, ssrValue ?? false);
 }
-
-function useMediaQuery_server(query: string, ssrValue?: boolean) {
-  return ssrValue ?? false;
-}
-
-export default typeof window !== "undefined"
-  ? useMediaQuery_client
-  : useMediaQuery_server;

@@ -1,17 +1,13 @@
-import { createElement } from "react";
-import {
-  BlockObject,
-  NormalBlockObject,
-  CodeBlockObject,
-  ImageObject,
-} from "@/data/block-types";
-import { InlineRenderer } from "./InlineRenderer";
-import { CodeBlockRenderer } from "./CodeBlockRenderer";
-import { ImageRenderer } from "./ImageRenderer";
+"use client";
 
-export interface BlockRendererProps {
-  containerKey: string | null;
-  block: BlockObject;
+import { createElement } from "react";
+import { NormalBlockObject } from "@/data/block-types";
+import { InlineRenderer } from "./InlineRenderer";
+import { useReportBlockVisibility } from "./BlockVisibilityCollector";
+
+export interface ParagraphRendererProps {
+  containerKey?: string | null;
+  block: NormalBlockObject;
 }
 
 export interface BlockquoteRendererProps {
@@ -25,12 +21,11 @@ export interface ListRendererProps {
   listStyle: NormalBlockObject["listItem"];
 }
 
-function ParagraphRenderer(props: {
-  containerKey?: string | null;
-  block: NormalBlockObject;
-}) {
-  const { block } = props;
+export function ParagraphRenderer(props: ParagraphRendererProps) {
+  const { containerKey, block } = props;
   const { children, markDefs } = block;
+
+  const ref = useReportBlockVisibility(block._key, containerKey);
 
   const childNodes = children.map((obj) => (
     <InlineRenderer key={obj._key} object={obj} markDefs={markDefs} />
@@ -47,17 +42,22 @@ function ParagraphRenderer(props: {
     return createElement(
       style,
       { id: _key },
-      <a href={`#${_key}`}>{childNodes}</a>
+      <a ref={ref} href={`#${_key}`}>
+        {childNodes}
+      </a>
     );
   }
 
-  return <p>{childNodes}</p>;
+  return <p ref={ref}>{childNodes}</p>;
 }
 
 export function BlockquoteRenderer(props: BlockquoteRendererProps) {
-  const { blocks } = props;
+  const { containerKey, blocks } = props;
+
+  const ref = useReportBlockVisibility(blocks[0]._key, containerKey);
+
   return (
-    <blockquote>
+    <blockquote ref={ref}>
       {blocks.map((block) => (
         <ParagraphRenderer key={block._key} block={block} />
       ))}
@@ -66,35 +66,17 @@ export function BlockquoteRenderer(props: BlockquoteRendererProps) {
 }
 
 export function ListRenderer(props: ListRendererProps) {
-  const { blocks, listStyle } = props;
+  const { containerKey, blocks, listStyle } = props;
+
+  const ref = useReportBlockVisibility(blocks[0]._key, containerKey);
 
   return createElement(
     listStyle === "number" ? "ol" : "ul",
-    undefined,
+    { ref },
     blocks.map((block) => (
       <li key={block._key}>
         <ParagraphRenderer block={block} />
       </li>
     ))
   );
-}
-
-export function BlockRenderer(props: BlockRendererProps) {
-  const { containerKey, block } = props;
-  if (block._type === "block") {
-    return <ParagraphRenderer containerKey={containerKey} block={block} />;
-  } else if (block._type === "code") {
-    return (
-      <CodeBlockRenderer
-        containerKey={containerKey}
-        block={block as CodeBlockObject}
-      />
-    );
-  } else if (block._type === "image") {
-    return (
-      <ImageRenderer containerKey={containerKey} block={block as ImageObject} />
-    );
-  }
-
-  return null;
 }

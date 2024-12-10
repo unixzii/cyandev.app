@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Reader } from "@/components/reader";
+import { Reader, BlockVisibilityCollector } from "@/components/reader";
 import { ReadableArea } from "@/components/adaptive-containers";
 import { sanityClient } from "@/data";
 import { get as getNote } from "@/data/notes";
@@ -18,20 +18,22 @@ export default async function Page(props: PageProps) {
   }
 
   return (
-    <ReadableArea hasVerticalMargins>
-      <main>
-        <header>
-          <time className="block font-light text-sm text-foreground-secondary">
-            {formatTimestampToHumanReadableDate(note.publishedAt)}
-          </time>
-          <h1 className="font-serif text-4xl text-accent mt-3 mb-5">
-            {note.title}
-          </h1>
-          <h2 className="text-xl font-light">{note.subtitle}</h2>
-        </header>
+    <BlockVisibilityCollector>
+      <ReadableArea hasVerticalMargins>
+        <main>
+          <header>
+            <time className="block font-light text-sm text-foreground-secondary">
+              {formatTimestampToHumanReadableDate(note.publishedAt)}
+            </time>
+            <h1 className="font-serif text-4xl text-accent mt-3 mb-5">
+              {note.title}
+            </h1>
+            <h2 className="text-xl font-light">{note.subtitle}</h2>
+          </header>
 
-        <Reader className="mt-12" body={note.body} />
-      </main>
-    </ReadableArea>
+          <Reader className="mt-12" body={note.body} />
+        </main>
+      </ReadableArea>
+    </BlockVisibilityCollector>
   );
 }

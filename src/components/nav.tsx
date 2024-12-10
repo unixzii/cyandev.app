@@ -9,8 +9,7 @@ import {
   memo,
 } from "react";
 import { motion } from "motion/react";
-import invariant from "invariant";
-import { selectClass, useMediaQuery } from "@/utils";
+import { selectClass, useMediaQuery, useIntersection } from "@/utils";
 import { Icon } from "@/components/icon";
 import { Link } from "./link";
 import { ReadableArea } from "./adaptive-containers";
@@ -175,24 +174,10 @@ NavBarContents.displayName = "NavBarContents";
 
 export function NavBar() {
   const isMobileMode = useIsMobileMode();
-  const [hairlineVisible, setHairlineVisible] = useState(false);
-  const scrollDetectorElementRef = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const scrollDetectorElement = scrollDetectorElementRef.current;
-    invariant(!!scrollDetectorElement, "This should not be null");
 
-    const ob = new IntersectionObserver(
-      (entries) => {
-        const ratio = entries[0].intersectionRatio;
-        setHairlineVisible(ratio < 0.1);
-      },
-      { threshold: [0, 0.1, 1] }
-    );
-    ob.observe(scrollDetectorElement);
-    return () => {
-      ob.disconnect();
-    };
-  }, [scrollDetectorElementRef, setHairlineVisible]);
+  const [scrollDetectorElement, setScrollDetectorElement] =
+    useState<HTMLDivElement | null>(null);
+  const hairlineVisible = !useIntersection(scrollDetectorElement, {}, true);
 
   const [extraHeight, setExtraHeight] = useState(0);
   const handleExpandChanged = useCallback(
@@ -231,7 +216,7 @@ export function NavBar() {
       <div
         id="scrollDetector"
         className="absolute top-0 w-full h-[1px]"
-        ref={scrollDetectorElementRef}
+        ref={setScrollDetectorElement}
       />
     </Fragment>
   );
