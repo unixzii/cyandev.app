@@ -2,7 +2,7 @@
 
 import { useIntersection } from "@/utils";
 import {
-  PropsWithChildren,
+  type PropsWithChildren,
   createContext,
   useContext,
   useEffect,
@@ -99,4 +99,8 @@ export function useReportBlockVisibility(
   }, [key, containerKey, isVisible, reporter]);
 
   return setElement;
+}
+
+export function useBlockVisibilityConsumer() {
+  return useContext(consumerContext);
 }

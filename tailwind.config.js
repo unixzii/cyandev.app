@@ -27,6 +27,9 @@ module.exports = {
         "serif": "var(--cyan-serif-font)",
         "mono": "var(--cyan-mono-font)",
       },
+      boxShadow: {
+        "md-no-offset": "0 0 6px 0 rgb(0 0 0 / 0.05)"
+      },
       keyframes: {
         glitchBlink: {
           "0%, 30%, 34%, 40%, 44%, 65%": { opacity: 0 },

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Reader, BlockVisibilityCollector } from "@/components/reader";
 import { ReadableArea } from "@/components/adaptive-containers";
+import { Toc } from "@/components/toc";
 import { sanityClient } from "@/data";
 import { get as getNote } from "@/data/notes";
 import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
@@ -34,6 +35,7 @@ export default async function Page(props: PageProps) {
           <Reader className="mt-12" body={note.body} />
         </main>
       </ReadableArea>
+      <Toc body={note.body} />
     </BlockVisibilityCollector>
   );
 }
