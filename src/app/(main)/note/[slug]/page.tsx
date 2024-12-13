@@ -5,9 +5,25 @@ import { Toc } from "@/components/toc";
 import { sanityClient } from "@/data";
 import { get as getNote } from "@/data/notes";
 import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
+import { buildMetadata } from "@/utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata(props: PageProps) {
+  const { slug } = await props.params;
+
+  const note = await getNote(sanityClient, slug);
+  if (!note) {
+    return undefined;
+  }
+
+  return buildMetadata({
+    title: note.title,
+    description: note.subtitle ?? undefined,
+    ogUrl: `https://cyandev.app/note/${slug}`,
+  });
 }
 
 export default async function Page(props: PageProps) {
