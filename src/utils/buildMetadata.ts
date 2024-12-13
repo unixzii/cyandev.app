@@ -15,6 +15,10 @@ export default function buildMetadata(metadata: Metadata): NextMetadata {
   return {
     title,
     description,
+    icons: {
+      icon: "/icon.png",
+      apple: "/apple-touch-icon.png",
+    },
     openGraph: {
       title,
       description,
