@@ -1,0 +1,10 @@
+@layer base {
+  html {
+    scroll-padding-top: 100px;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-primary);
+  }
+}

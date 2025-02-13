@@ -14,7 +14,7 @@
   display: block;
   height: 1.5px;
   width: 22px;
-  background-color: var(--cyan-foreground-secondary-color);
+  background-color: var(--color-secondary);
   transition: transform 0.3s ease;
 }
 

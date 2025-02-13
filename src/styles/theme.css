@@ -1,0 +1,37 @@
+@theme {
+  --font-sans: "Inter";
+
+  --color-background: var(--color-neutral-50);
+  --color-primary: var(--color-neutral-800);
+  --color-secondary: var(--color-neutral-500);
+  --color-separator: --alpha(var(--color-primary) / 8%);
+  --color-backdrop-tint: --alpha(var(--color-background) / 75%);
+
+  --animate-glitch-blink: glitch-blink 2s linear both;
+
+  @keyframes glitch-blink {
+    0%, 30%, 34%, 40%, 44%, 65% {
+      opacity: 0;
+    }
+    70%, 98% {
+      opacity: 0.3;
+      text-shadow: 0px 0px 30px rgb(255 255 255 / 90%);
+    }
+    33%, 43%, 100% {
+      opacity: 1;
+      text-shadow: 0px 0px 50px rgb(255 255 255 / 80%);
+    }
+  }
+}
+
+@layer theme {
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background: var(--color-neutral-900);
+      --color-primary: var(--color-neutral-100);
+      --color-secondary: var(--color-neutral-400);
+      --color-separator: --alpha(var(--color-primary) / 12%);
+      --color-backdrop-tint: --alpha(var(--color-background) / 75%);
+    }
+  }
+}

@@ -45,7 +45,7 @@ export default async function Page() {
 
   return (
     <ReadableArea hasVerticalMargins>
-      <h1 className="font-serif text-4xl text-accent">All Notes</h1>
+      <h1 className="page-title">All Notes</h1>
       <div className="mt-8">
         {notes.map((note) => (
           <NoteItem key={note._id} note={note} />

@@ -4,34 +4,22 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 import { PropsWithChildren } from "react";
 import type { Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
-import { Inter, Noto_Serif, Noto_Serif_SC, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
-import { GrainTextureBackground } from "@/components/background-textures";
 import { LoadingBarContainer } from "@/components/loading-bar";
 
-const sansFont = Inter({ subsets: ["latin"] });
-const serifFallbackFont = Noto_Serif_SC({
+const interFont = Inter({
   subsets: ["latin"],
-  variable: "--cyan-serif-fallback-font",
+  variable: "--font-inter",
 });
-const serifFont = Noto_Serif({
+const geistFont = Geist_Mono({
   subsets: ["latin"],
-  variable: "--cyan-serif-font",
-  fallback: ["var(--cyan-serif-fallback-font)"],
-});
-const monoFont = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--cyan-mono-font",
+  variable: "--font-geist",
 });
 
-const fontClassNames = [
-  sansFont.className,
-  serifFallbackFont.variable,
-  serifFont.variable,
-  monoFont.variable,
-].join(" ");
+const fontClassNames = [interFont.variable, geistFont.variable].join(" ");
 
 // Workaround: don't inject Font Awesome CSS at run-time,
 // which may cause layout shifts.
@@ -52,7 +40,6 @@ export default function RootLayout({ children }: PropsWithChildren) {
     <html lang="en">
       <body className={fontClassNames}>
         <div id="appMain" className="relative flow-root">
-          <GrainTextureBackground />
           <LoadingBarContainer>
             <NavBar />
             {children}

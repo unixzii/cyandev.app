@@ -1,46 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  --cyan-background-color: rgb(255, 254, 253);
-  --cyan-background-secondary-color: rgb(246, 245, 244);
-  --cyan-background-tertiary-color: rgb(238, 238, 238);
-
-  --cyan-foreground-color: rgb(65, 65, 60);
-  --cyan-foreground-secondary-color: rgb(150, 150, 150);
-  --cyan-foreground-tertiary-color: rgb(200, 200, 200);
-
-  --cyan-border-color: rgba(0, 0, 0, 0.08);
-  --cyan-border-stronger-color: rgba(0, 0, 0, 0.1);
-  --cyan-backdrop-tint-color: rgba(255, 255, 255, 0.7);
-  --cyan-accent-color: #78b3ce;
-  --cyan-reveal-highlight-color: #000;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --cyan-background-color: rgb(25, 25, 28);
-    --cyan-background-secondary-color: rgb(35, 35, 38);
-    --cyan-background-tertiary-color: rgb(45, 45, 45);
-
-    --cyan-foreground-color: rgb(230, 230, 220);
-    --cyan-foreground-secondary-color: rgb(150, 150, 145);
-    --cyan-foreground-tertiary-color: rgb(80, 80, 80);
-
-    --cyan-border-color: rgba(255, 255, 255, 0.08);
-    --cyan-border-stronger-color: rgba(255, 255, 255, 0.14);
-    --cyan-backdrop-tint-color: rgba(35, 35, 35, 0.8);
-    --cyan-accent-color: #80b8c6;
-    --cyan-reveal-highlight-color: #fff;
-  }
-}
-
-html {
-  scroll-padding-top: 100px;
-}
-
-body {
-  color: var(--cyan-foreground-color);
-  background: var(--cyan-background-color);
-}
+@import "./theme.css";
+@import "./base.css";
+@import "./components.css";

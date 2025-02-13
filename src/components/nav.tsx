@@ -13,7 +13,6 @@ import { selectClass, useMediaQuery, useIntersection } from "@/utils";
 import { Icon } from "@/components/icon";
 import { Link } from "./link";
 import { ReadableArea } from "./adaptive-containers";
-import { RevealHighlightPlatter, useRevealHighlight } from "./reveal-highlight";
 import me from "../../data/me.json";
 
 import "./nav.css";
@@ -32,22 +31,13 @@ interface NavLinkProps {
 const NavLink = memo((props: NavLinkProps) => {
   const { title, icon, href, mobile } = props;
 
-  const { targetProps } = useRevealHighlight({
-    insetWidth: !!icon ? 0 : 2,
-    insetHeight: 4,
-  });
-
   return (
     <Link
       className={selectClass(
         { "px-3": !mobile },
-        "hover:text-foreground transition-colors duration-200"
+        "text-secondary hover:text-primary font-light transition-colors duration-200"
       )}
       href={href}
-      onMouseEnter={targetProps.onMouseEnter}
-      onMouseLeave={targetProps.onMouseLeave}
-      onMouseDown={targetProps.onMouseDown}
-      onMouseUp={targetProps.onMouseUp}
       aria-label={title}
     >
       {icon ? (
@@ -74,8 +64,7 @@ const NavLinks = memo((props: NavLinksProps) => {
           "flex flex-col gap-4 pb-4": mobile,
           "hidden sm:flex flex-1": !mobile,
         },
-        "font-light text-foreground-secondary" +
-          (className ? ` ${className}` : "")
+        className ? ` ${className}` : ""
       )}
     >
       <NavLink title="Notes" href="/" mobile={mobile} />
@@ -162,9 +151,7 @@ const NavBarContents = memo(
         {isMobileMode ? (
           <MobileMenu onExpandChanged={onExpandChanged} />
         ) : (
-          <RevealHighlightPlatter>
-            <NavLinks />
-          </RevealHighlightPlatter>
+          <NavLinks />
         )}
       </ReadableArea>
     );
@@ -199,14 +186,14 @@ export function NavBar() {
       <motion.nav
         className={selectClass(
           {
-            "border-border bg-backdrop-tint backdrop-blur":
+            "border-separator bg-backdrop-tint backdrop-blur":
               hairlineVisible || expanded,
             "border-transparent": !(hairlineVisible || expanded),
           },
-          "fixed top-0 w-full z-50 border-b transition-colors duration-500 overflow-hidden"
+          "fixed top-0 w-full z-50 border-b transition-colors duration-300 overflow-hidden"
         )}
         animate={{ height: extraHeight + 52 }}
-        transition={{ type: "spring", duration: 0.5, bounce: 0 }}
+        transition={{ type: "spring", duration: 0.3, bounce: 0 }}
       >
         <NavBarContents
           isMobileMode={isMobileMode}
