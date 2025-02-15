@@ -8,7 +8,6 @@ import { Inter, Geist_Mono } from "next/font/google";
 import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "@/components/nav";
-import { LoadingBarContainer } from "@/components/loading-bar";
 
 const interFont = Inter({
   subsets: ["latin"],
@@ -40,10 +39,8 @@ export default function RootLayout({ children }: PropsWithChildren) {
     <html lang="en">
       <body className={fontClassNames}>
         <div id="appMain" className="relative flow-root">
-          <LoadingBarContainer>
-            <NavBar />
-            {children}
-          </LoadingBarContainer>
+          <NavBar />
+          {children}
         </div>
       </body>
       <Analytics />

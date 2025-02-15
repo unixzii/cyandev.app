@@ -1,12 +1,11 @@
 import { type PropsWithChildren, Fragment } from "react";
+import { ReadableArea } from "@/components/adaptive-containers";
 import { Footer } from "@/components/footer";
 
 export default function MainLayout({ children }: PropsWithChildren) {
   return (
     <Fragment>
-      <div id="safeAreaInsets" className="pt-14">
-        {children}
-      </div>
+      <ReadableArea className="pt-32 pb-12">{children}</ReadableArea>
       <Footer />
     </Fragment>
   );
