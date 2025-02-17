@@ -3,6 +3,7 @@
   --font-mono: "Geist Mono";
 
   --color-background: var(--color-neutral-50);
+  --color-background-secondary: var(--color-neutral-100);
   --color-primary: var(--color-neutral-800);
   --color-secondary: var(--color-neutral-500);
   --color-tertiary: var(--color-neutral-300);
@@ -11,6 +12,7 @@
   --color-body: var(--color-neutral-600);
   --color-link: var(--color-blue-500);
   --color-link-highlighted: var(--color-blue-700);
+  --color-code-highlighted-line: --alpha(var(--color-neutral-200) / 75%);
 
   --animate-glitch-blink: glitch-blink 2s linear both;
 
@@ -41,6 +43,7 @@
   @media (prefers-color-scheme: dark) {
     :root {
       --color-background: var(--color-neutral-900);
+      --color-background-secondary: --alpha(var(--color-neutral-950) / 50%);
       --color-primary: var(--color-neutral-100);
       --color-secondary: var(--color-neutral-400);
       --color-tertiary: var(--color-neutral-600);
@@ -49,6 +52,7 @@
       --color-body: var(--color-neutral-300);
       --color-link: var(--color-blue-400);
       --color-link-highlighted: var(--color-blue-300);
+      --color-code-highlighted-line: --alpha(var(--color-neutral-800) / 60%);
     }
   }
 }

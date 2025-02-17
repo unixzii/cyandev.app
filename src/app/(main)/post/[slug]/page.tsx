@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 
 import { listPostSlugs } from "@/data/posts";
+import { overrideComponents } from "@/components/reader";
 import "./styles.css";
 
 interface PageProps {
@@ -19,7 +20,7 @@ export default async function Page(props: PageProps) {
       <h1 className="page-title">{title}</h1>
       {description && <p className="mt-8 text-xl">{description}</p>}
       <article className="mt-12 md-reader">
-        <MDXContent />
+        <MDXContent components={overrideComponents} />
       </article>
     </Fragment>
   );
