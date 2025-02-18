@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 
-import { listPostSlugs } from "@/data/posts";
+import { listPostSlugs, loadPost } from "@/data/posts";
 import { overrideComponents } from "@/components/reader";
 import "./styles.css";
 
@@ -10,9 +10,7 @@ interface PageProps {
 
 export default async function Page(props: PageProps) {
   const { slug } = await props.params;
-  const { default: MDXContent, metadata } = await import(
-    `@/../data/posts/${slug}.mdx`
-  );
+  const { MDXContent, metadata } = await loadPost(slug);
   const { title, description } = metadata;
 
   return (

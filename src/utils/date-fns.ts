@@ -4,5 +4,5 @@ export function formatTimestampToHumanReadableDate(
   timestamp: number | string
 ): string {
   const date = new Date(timestamp);
-  return formatDate(date, "MMM. do yyyy");
+  return formatDate(date, "MMM. do, yyyy");
 }

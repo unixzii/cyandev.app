@@ -67,7 +67,7 @@ const NavLinks = memo((props: NavLinksProps) => {
         className ? ` ${className}` : ""
       )}
     >
-      <NavLink title="Notes" href="/" mobile={mobile} />
+      <NavLink title="Posts" href="/" mobile={mobile} />
       <NavLink title="About Me" href="/" mobile={mobile} />
       <div className={mobile ? "hidden" : "flex-1"} />
       <div className={mobile ? "flex gap-6" : "contents"}>

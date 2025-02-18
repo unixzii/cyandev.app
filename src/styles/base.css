@@ -6,5 +6,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-primary);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
   }
 }
