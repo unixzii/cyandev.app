@@ -9,4 +9,8 @@
     font-size: var(--text-base);
     line-height: var(--text-base--line-height);
   }
+
+  *::selection {
+    background-color: --alpha(var(--color-primary) / 15%);
+  }
 }
