@@ -3,24 +3,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTwitter,
   faGithub,
-  faInstagram,
   faBilibili,
 } from "@fortawesome/free-brands-svg-icons";
 import { SizeProp } from "@fortawesome/fontawesome-svg-core";
-import {
-  faEllipsisH,
-  faArrowLeft,
-  faHouse,
-} from "@fortawesome/free-solid-svg-icons";
+import { faRss } from "@fortawesome/free-solid-svg-icons";
 
 const ICON_MAP = {
   twitter: faTwitter,
   github: faGithub,
-  instagram: faInstagram,
   bilibili: faBilibili,
-  ellipsis: faEllipsisH,
-  arrowLeft: faArrowLeft,
-  house: faHouse,
+  rss: faRss,
 };
 
 export type IconProps = {

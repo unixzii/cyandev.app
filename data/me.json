@@ -1,6 +1,11 @@
 {
   "links": [
     {
+      "title": "RSS",
+      "icon": "rss",
+      "url": "/rss"
+    },
+    {
       "title": "GitHub",
       "icon": "github",
       "url": "https://github.com/unixzii"
@@ -9,11 +14,6 @@
       "title": "Twitter",
       "icon": "twitter",
       "url": "https://twitter.com/unixzii"
-    },
-    {
-      "title": "Instagram",
-      "icon": "instagram",
-      "url": "https://www.instagram.com/unixzii"
     },
     {
       "title": "Bilibili",

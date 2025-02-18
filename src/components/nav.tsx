@@ -8,12 +8,10 @@ import {
   useState,
   memo,
 } from "react";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { selectClass, useMediaQuery, useIntersection } from "@/utils";
-import { Icon } from "@/components/icon";
-import { Link } from "./link";
 import { ReadableArea } from "./adaptive-containers";
-import me from "../../data/me.json";
 
 import "./nav.css";
 
@@ -23,28 +21,19 @@ function useIsMobileMode() {
 
 interface NavLinkProps {
   title: string;
-  icon?: string;
   href: string;
-  mobile?: boolean;
 }
 
 const NavLink = memo((props: NavLinkProps) => {
-  const { title, icon, href, mobile } = props;
+  const { title, href } = props;
 
   return (
     <Link
-      className={selectClass(
-        { "px-3": !mobile },
-        "text-secondary hover:text-primary font-light transition-colors duration-200"
-      )}
+      className="text-secondary hover:text-primary font-light transition-colors duration-200"
       href={href}
       aria-label={title}
     >
-      {icon ? (
-        <Icon icon={icon as any} size={mobile ? "lg" : undefined} />
-      ) : (
-        title
-      )}
+      {title}
     </Link>
   );
 });
@@ -62,25 +51,13 @@ const NavLinks = memo((props: NavLinksProps) => {
       className={selectClass(
         {
           "flex flex-col gap-4 pb-4": mobile,
-          "hidden sm:flex flex-1": !mobile,
+          "hidden sm:flex flex-1 gap-4 justify-end": !mobile,
         },
         className ? ` ${className}` : ""
       )}
     >
-      <NavLink title="Posts" href="/" mobile={mobile} />
-      <NavLink title="About Me" href="/" mobile={mobile} />
-      <div className={mobile ? "hidden" : "flex-1"} />
-      <div className={mobile ? "flex gap-6" : "contents"}>
-        {me.links.map((link) => (
-          <NavLink
-            key={link.title}
-            title={link.title}
-            icon={link.icon}
-            href={link.url}
-            mobile={mobile}
-          />
-        ))}
-      </div>
+      <NavLink title="Posts" href="/" />
+      <NavLink title="About Me" href="/" />
     </div>
   );
 });
@@ -147,7 +124,7 @@ const NavBarContents = memo(
   }) => {
     return (
       <ReadableArea className="flex items-center h-[52px]">
-        <span className="font-bold cursor-default mr-3">Cyandev</span>
+        <span className="font-bold cursor-default">Cyandev</span>
         {isMobileMode ? (
           <MobileMenu onExpandChanged={onExpandChanged} />
         ) : (
