@@ -1,9 +1,10 @@
 import { FC } from "react";
 import Link from "next/link";
 import { format as formatDate } from "date-fns";
-import { ReadableArea } from "./adaptive-containers";
-import { Icon } from "./icon";
-import me from "../../data/me.json";
+import { ReadableArea } from "../../components/adaptive-containers";
+import { Icon } from "@/components/icon";
+import me from "../../../data/me.json";
+import { ThemeSwitcher } from "./theme-switcher";
 
 function SocialLink({
   title,
@@ -45,13 +46,14 @@ function SocialLinks() {
 export const Footer: FC = () => {
   return (
     <footer className="pb-16 md:pb-20">
-      <ReadableArea className="flex justify-between">
+      <ReadableArea className="flex items-start justify-between">
         <div>
           <p className="mb-2 text-secondary text-sm font-light">
             © {formatDate(Date.now(), "yyyy")} Cyandev
           </p>
           <SocialLinks />
         </div>
+        <ThemeSwitcher />
       </ReadableArea>
     </footer>
   );

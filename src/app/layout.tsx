@@ -6,8 +6,9 @@ import type { Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter, Geist_Mono } from "next/font/google";
 import { config as faConfig } from "@fortawesome/fontawesome-svg-core";
+import { ThemeInitializer } from "@/theme";
 import { buildMetadata } from "@/utils";
-import { NavBar } from "@/components/nav";
+import { NavBar } from "./_components/navbar";
 
 const interFont = Inter({
   subsets: ["latin"],
@@ -36,13 +37,14 @@ export const metadata = buildMetadata({});
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html className="theme-system" lang="en">
+    <html lang="en" data-theme="system">
       <body className={fontClassNames}>
         <div id="appMain" className="relative flow-root">
           <NavBar />
           {children}
         </div>
       </body>
+      <ThemeInitializer />
       <Analytics />
     </html>
   );

@@ -54,12 +54,12 @@
 }
 
 @layer theme {
-  .theme-dark:root {
+  :root[data-theme="dark"] {
     @apply dark-theme-colors;
   }
 
   @media (prefers-color-scheme: dark) {
-    .theme-system:root {
+    :root[data-theme="system"] {
       @apply dark-theme-colors;
     }
   }

@@ -11,9 +11,9 @@ import {
 import Link from "next/link";
 import { motion } from "motion/react";
 import { selectClass, useMediaQuery, useIntersection } from "@/utils";
-import { ReadableArea } from "./adaptive-containers";
+import { ReadableArea } from "@/components/adaptive-containers";
 
-import "./nav.css";
+import "./styles.css";
 
 function useIsMobileMode() {
   return useMediaQuery("(max-width: 640px)", false);

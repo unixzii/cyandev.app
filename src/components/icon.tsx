@@ -6,17 +6,26 @@ import {
   faBilibili,
 } from "@fortawesome/free-brands-svg-icons";
 import { SizeProp } from "@fortawesome/fontawesome-svg-core";
-import { faRss } from "@fortawesome/free-solid-svg-icons";
+import {
+  faRss,
+  faSun,
+  faMoon,
+  faDisplay,
+} from "@fortawesome/free-solid-svg-icons";
 
 const ICON_MAP = {
   twitter: faTwitter,
   github: faGithub,
   bilibili: faBilibili,
   rss: faRss,
+  sun: faSun,
+  moon: faMoon,
+  display: faDisplay,
 };
+export type IconType = keyof typeof ICON_MAP;
 
 export type IconProps = {
-  icon: keyof typeof ICON_MAP;
+  icon: IconType;
   size?: SizeProp;
   className?: string;
   style?: CSSProperties;
