@@ -36,7 +36,7 @@ export const metadata = buildMetadata({});
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en">
+    <html className="theme-system" lang="en">
       <body className={fontClassNames}>
         <div id="appMain" className="relative flow-root">
           <NavBar />

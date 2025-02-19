@@ -14,3 +14,15 @@
     background-color: --alpha(var(--color-primary) / 15%);
   }
 }
+
+@custom-variant dark {
+  .theme-dark & {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .theme-system & {
+      @slot;
+    }
+  }
+}
