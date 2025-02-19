@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import themeManager from "./ThemeManager";
 
-export default function ThemeInitializer() {
+export default function ThemeClientInitializer() {
   useEffect(() => {
     themeManager.init();
   }, []);
