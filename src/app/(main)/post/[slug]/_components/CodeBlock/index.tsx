@@ -1,6 +1,6 @@
 import { codeToHtml } from "shiki";
 
-import "./CodeBlock.css";
+import "./styles.css";
 
 export interface CodeBlockProps {
   originalClassName: string | null;
@@ -34,8 +34,8 @@ export async function CodeBlock(props: CodeBlockProps) {
   const html = await codeToHtml(code, {
     lang: codeInfo.language,
     themes: {
-      light: "vitesse-light",
-      dark: "vitesse-dark",
+      light: "github-light-default",
+      dark: "github-dark-default",
     },
     decorations:
       codeInfo.highlightedLines?.map((line) => ({

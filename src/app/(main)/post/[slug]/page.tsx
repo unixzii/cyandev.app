@@ -1,8 +1,30 @@
-import { Fragment } from "react";
+import { Children as ReactChildren, Fragment } from "react";
+import type { MDXComponents } from "mdx/types";
 
 import { listPostSlugs, loadPost } from "@/data/posts";
-import { overrideComponents } from "@/components/reader";
+import { CodeBlock } from "./_components/CodeBlock";
 import "./styles.css";
+
+const overrideComponents: MDXComponents = {
+  pre(props) {
+    if (ReactChildren.count(props.children) === 1) {
+      const child = ReactChildren.toArray(props.children)[0];
+      if (
+        typeof child === "object" &&
+        "type" in child &&
+        child.type === "code"
+      ) {
+        return (
+          <CodeBlock
+            originalClassName={child.props.className}
+            code={child.props.children}
+          />
+        );
+      }
+    }
+    return <pre {...props} />;
+  },
+};
 
 interface PageProps {
   params: Promise<{ slug: string }>;
