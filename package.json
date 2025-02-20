@@ -10,13 +10,9 @@
     "lint": "next lint"
   },
   "devDependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.7.1",
-    "@fortawesome/free-brands-svg-icons": "^6.4.0",
-    "@fortawesome/free-regular-svg-icons": "^6.4.0",
-    "@fortawesome/free-solid-svg-icons": "^6.4.0",
-    "@fortawesome/react-fontawesome": "^0.2.0",
     "@mdx-js/loader": "^3.1.0",
     "@mdx-js/react": "^3.1.0",
+    "@next/bundle-analyzer": "^15.1.7",
     "@next/mdx": "^15.1.7",
     "@tailwindcss/postcss": "^4.0.6",
     "@types/invariant": "^2.2.37",
@@ -36,6 +32,7 @@
     "postcss": "^8.5.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-icons": "^5.5.0",
     "shiki": "^1.24.0",
     "tailwindcss": "^4.0.6",
     "typescript": "5.1.3",

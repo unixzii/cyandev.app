@@ -26,7 +26,7 @@ function ThemeRadioButton({
       )}
       onClick={onClick}
     >
-      <Icon icon={icon} size="sm" />
+      <Icon icon={icon} size="15px" />
     </button>
   );
 }

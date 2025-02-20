@@ -22,7 +22,7 @@ function SocialLink({
         href={href}
         aria-label={title}
       >
-        <Icon icon={icon as any} />
+        <Icon icon={icon as any} size="18px" />
       </Link>
     </li>
   );

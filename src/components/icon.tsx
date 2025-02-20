@@ -1,43 +1,31 @@
-import { CSSProperties } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import type { IconBaseProps } from "react-icons";
 import {
-  faTwitter,
-  faGithub,
-  faBilibili,
-} from "@fortawesome/free-brands-svg-icons";
-import { SizeProp } from "@fortawesome/fontawesome-svg-core";
-import {
-  faRss,
-  faSun,
-  faMoon,
-  faDisplay,
-} from "@fortawesome/free-solid-svg-icons";
+  TbBrandTwitter,
+  TbBrandGithub,
+  TbBrandBilibili,
+  TbRss,
+  TbSun,
+  TbMoon,
+  TbDeviceDesktop,
+} from "react-icons/tb";
 
 const ICON_MAP = {
-  twitter: faTwitter,
-  github: faGithub,
-  bilibili: faBilibili,
-  rss: faRss,
-  sun: faSun,
-  moon: faMoon,
-  display: faDisplay,
+  twitter: TbBrandTwitter,
+  github: TbBrandGithub,
+  bilibili: TbBrandBilibili,
+  rss: TbRss,
+  sun: TbSun,
+  moon: TbMoon,
+  display: TbDeviceDesktop,
 };
 export type IconType = keyof typeof ICON_MAP;
 
 export type IconProps = {
   icon: IconType;
-  size?: SizeProp;
-  className?: string;
-  style?: CSSProperties;
-};
+} & IconBaseProps;
 
 export function Icon(props: IconProps) {
-  return (
-    <FontAwesomeIcon
-      className={props.className}
-      style={props.style}
-      icon={ICON_MAP[props.icon]}
-      size={props.size}
-    />
-  );
+  const { icon, ...restProps } = props;
+  const IconComponent = ICON_MAP[icon];
+  return <IconComponent {...restProps} />;
 }

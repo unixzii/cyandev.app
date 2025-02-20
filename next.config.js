@@ -1,4 +1,5 @@
 import createMDX from "@next/mdx";
+import NextBundleAnalyzer from "@next/bundle-analyzer";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -20,5 +21,8 @@ const nextConfig = {
 };
 
 const withMDX = createMDX({});
+const withBundleAnalyzer = NextBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
-export default withMDX(nextConfig);
+export default withBundleAnalyzer(withMDX(nextConfig));
