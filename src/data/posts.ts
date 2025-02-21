@@ -52,6 +52,7 @@ export async function loadPost(slug: string): Promise<PostModule> {
   const { default: MDXContent, metadata } = await import(
     `../../data/posts/${slug}.mdx`
   );
+  metadata.date = new Date(metadata.date);
   return {
     MDXContent,
     metadata,

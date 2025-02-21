@@ -4,4 +4,12 @@
     font-weight: var(--font-weight-bold);
     line-height: 1.1;
   }
+  
+  .page-subtitle {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-light);
+    line-height: 1.0;
+    color: var(--color-secondary);
+    margin-top: calc(var(--spacing) * 6);
+  }
 }

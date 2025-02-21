@@ -45,7 +45,7 @@ function SocialLinks() {
 
 export const Footer: FC = () => {
   return (
-    <footer className="pb-16 md:pb-20">
+    <footer className="pb-12 md:pb-16">
       <ReadableArea className="flex items-start justify-between">
         <div>
           <p className="mb-2 text-secondary text-sm font-light">

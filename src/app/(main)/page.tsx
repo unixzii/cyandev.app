@@ -35,8 +35,8 @@ export default async function Page() {
   return (
     <Fragment>
       <h1 className="page-title">All Posts</h1>
-      <p className="mt-2 font-light text-secondary">{posts.length} posts</p>
-      <div className="mt-12">
+      <p className="page-subtitle">{posts.length} posts</p>
+      <div className="mt-16">
         <ul>
           {posts.map((post) => (
             <PostItem key={post.slug} post={post} />
