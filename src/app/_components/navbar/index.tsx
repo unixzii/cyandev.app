@@ -56,8 +56,8 @@ const NavLinks = memo((props: NavLinksProps) => {
         className
       )}
     >
-      <NavLink title="Posts" href="/" />
-      <NavLink title="About Me" href="/" />
+      <NavLink title="posts" href="/" />
+      <NavLink title="about" href="/" />
     </div>
   );
 });
@@ -124,7 +124,7 @@ const NavBarContents = memo(
   }) => {
     return (
       <ReadableArea className="flex items-center h-[52px]">
-        <span className="font-bold cursor-default">Cyandev</span>
+        <span className="font-mono font-bold cursor-default">cyandev&#95;</span>
         {isMobileMode ? (
           <MobileMenu onExpandChanged={onExpandChanged} />
         ) : (
