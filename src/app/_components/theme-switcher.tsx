@@ -9,10 +9,12 @@ import { type Theme, themeManager } from "@/theme";
 function ThemeRadioButton({
   active,
   icon,
+  title,
   onClick,
 }: {
   active: boolean;
   icon: IconType;
+  title: string;
   onClick: MouseEventHandler;
 }) {
   return (
@@ -24,6 +26,9 @@ function ThemeRadioButton({
         },
         "flex w-[30px] h-[30px] items-center justify-center cursor-pointer hover:text-primary transition-colors duration-200",
       )}
+      role="radio"
+      aria-label={title}
+      aria-checked={active}
       onClick={onClick}
     >
       <Icon icon={icon} size="15px" />
@@ -51,7 +56,10 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <div className="relative p-0.5 bg-separator inset-shadow-xs rounded-full">
+    <div
+      className="relative p-0.5 bg-separator inset-shadow-xs rounded-full"
+      aria-label="Theme Switcher"
+    >
       <motion.div
         className="absolute w-[30px] h-[30px] bg-background shadow rounded-full z-10"
         initial={{ left: INDICATOR_OFFSET_MAP["system"] }}
@@ -63,16 +71,19 @@ export function ThemeSwitcher() {
         <ThemeRadioButton
           active={currentTheme === "dark"}
           icon="moon"
+          title="Dark"
           onClick={() => changeTheme("dark")}
         />
         <ThemeRadioButton
           active={currentTheme === "system"}
           icon="display"
+          title="System"
           onClick={() => changeTheme("system")}
         />
         <ThemeRadioButton
           active={currentTheme === "light"}
           icon="sun"
+          title="Light"
           onClick={() => changeTheme("light")}
         />
       </div>

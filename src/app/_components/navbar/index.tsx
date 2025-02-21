@@ -85,7 +85,13 @@ const MobileMenu = memo((props: MobileMenuProps) => {
   return (
     <div className="flex flex-1">
       <div className="flex-1" />
-      <button className="p-[4px]" onClick={toggleExpanded}>
+      <button
+        className="p-[4px]"
+        aria-haspopup={true}
+        aria-expanded={expanded}
+        aria-label="Toggle Navigation Menu"
+        onClick={toggleExpanded}
+      >
         <div
           className={makeClass(
             { "cyan-mobile-menu-expanded": expanded },
