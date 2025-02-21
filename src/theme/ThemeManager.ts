@@ -10,12 +10,26 @@ interface ThemeManager {
 }
 
 const LOCAL_STORAGE_KEY = "app_theme";
+const THEME_TRANSITION_CLASS = "theme-transition";
 
 const listeners = new Set<() => void>();
 let currentTheme: Theme = "system";
-function applyTheme(theme: Theme) {
+let clearTransitionTimer: number | null = null;
+function applyTheme(theme: Theme, withAnimation: boolean) {
   currentTheme = theme;
-  document.documentElement.dataset["theme"] = theme;
+
+  const root = document.documentElement;
+  if (withAnimation) {
+    root.classList.add(THEME_TRANSITION_CLASS);
+    if (clearTransitionTimer) {
+      window.clearTimeout(clearTransitionTimer);
+    }
+    clearTransitionTimer = window.setTimeout(() => {
+      root.classList.remove(THEME_TRANSITION_CLASS);
+      clearTransitionTimer = null;
+    }, 300);
+  }
+  root.dataset["theme"] = theme;
 
   listeners.forEach((f) => f());
 }
@@ -28,7 +42,7 @@ const themeManager: ThemeManager = {
       persistentTheme === "light" ||
       persistentTheme === "dark"
     ) {
-      applyTheme(persistentTheme);
+      applyTheme(persistentTheme, false);
     }
   },
   getTheme() {
@@ -36,7 +50,7 @@ const themeManager: ThemeManager = {
   },
   setTheme(theme: Theme) {
     localStorage.setItem(LOCAL_STORAGE_KEY, theme);
-    applyTheme(theme);
+    applyTheme(theme, true);
   },
   registerListener(listener) {
     listeners.add(listener);

@@ -163,11 +163,10 @@ export function NavBar() {
       <motion.nav
         className={selectClass(
           {
-            "border-separator bg-backdrop-tint backdrop-blur":
-              hairlineVisible || expanded,
+            "border-separator": hairlineVisible || expanded,
             "border-transparent": !(hairlineVisible || expanded),
           },
-          "fixed top-0 w-full z-50 border-b transition-colors duration-300 overflow-hidden"
+          "fixed top-0 w-full z-50 border-b bg-backdrop-tint backdrop-blur overflow-hidden"
         )}
         animate={{ height: extraHeight + 52 }}
         transition={{ type: "spring", duration: 0.3, bounce: 0 }}
