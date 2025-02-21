@@ -1,6 +1,6 @@
-export default function selectClass(
+export default function makeClass(
   selectors: Record<string, boolean | undefined>,
-  extraClassName?: string
+  ...extraClassNames: (string | undefined)[]
 ): string {
   let className = "";
   for (const key in selectors) {
@@ -8,9 +8,10 @@ export default function selectClass(
       className += `${key} `;
     }
   }
-  if (extraClassName) {
-    className += extraClassName;
-    return className;
+  for (const extraClassName of extraClassNames) {
+    if (extraClassName) {
+      className += `${extraClassName} `;
+    }
   }
   return className.trimEnd();
 }

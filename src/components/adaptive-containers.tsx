@@ -1,5 +1,5 @@
 import { FC, PropsWithChildren } from "react";
-import { selectClass } from "@/utils";
+import { makeClass } from "@/utils";
 
 type ReadableAreaProps = {
   className?: string;
@@ -9,7 +9,7 @@ export const ReadableArea: FC<PropsWithChildren<ReadableAreaProps>> = ({
   children,
 }) => {
   return (
-    <div className={selectClass({ "mx-auto max-w-3xl px-6": true }, className)}>
+    <div className={makeClass({}, "mx-auto max-w-3xl px-6", className)}>
       {children}
     </div>
   );

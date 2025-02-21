@@ -3,7 +3,7 @@
 import { type MouseEventHandler, useSyncExternalStore } from "react";
 import { motion } from "motion/react";
 import { type IconType, Icon } from "@/components/icon";
-import { selectClass } from "@/utils";
+import { makeClass } from "@/utils";
 import { type Theme, themeManager } from "@/theme";
 
 function ThemeRadioButton({
@@ -17,7 +17,7 @@ function ThemeRadioButton({
 }) {
   return (
     <button
-      className={selectClass(
+      className={makeClass(
         {
           "text-primary": active,
           "text-secondary": !active,

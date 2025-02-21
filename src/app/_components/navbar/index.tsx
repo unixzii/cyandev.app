@@ -10,7 +10,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { selectClass, useMediaQuery, useIntersection } from "@/utils";
+import { makeClass, useMediaQuery, useIntersection } from "@/utils";
 import { ReadableArea } from "@/components/adaptive-containers";
 
 import "./styles.css";
@@ -48,12 +48,12 @@ const NavLinks = memo((props: NavLinksProps) => {
   const { mobile, className } = props;
   return (
     <div
-      className={selectClass(
+      className={makeClass(
         {
           "flex flex-col gap-4 pb-4": mobile,
           "hidden sm:flex flex-1 gap-4 justify-end": !mobile,
         },
-        className
+        className,
       )}
     >
       <NavLink title="posts" href="/" />
@@ -87,9 +87,9 @@ const MobileMenu = memo((props: MobileMenuProps) => {
       <div className="flex-1" />
       <button className="p-[4px]" onClick={toggleExpanded}>
         <div
-          className={selectClass(
+          className={makeClass(
             { "cyan-mobile-menu-expanded": expanded },
-            "cyan-mobile-menu-icon"
+            "cyan-mobile-menu-icon",
           )}
         />
       </button>
@@ -99,11 +99,11 @@ const MobileMenu = memo((props: MobileMenuProps) => {
       >
         <ReadableArea>
           <NavLinks
-            className={selectClass(
+            className={makeClass(
               {
                 "opacity-0": !expanded,
               },
-              "pt-2 transition-opacity duration-200"
+              "pt-2 transition-opacity duration-200",
             )}
             mobile
           />
@@ -132,7 +132,7 @@ const NavBarContents = memo(
         )}
       </ReadableArea>
     );
-  }
+  },
 );
 NavBarContents.displayName = "NavBarContents";
 
@@ -148,7 +148,7 @@ export function NavBar() {
     (height?: number) => {
       setExtraHeight(height ?? 0);
     },
-    [setExtraHeight]
+    [setExtraHeight],
   );
   const expanded = extraHeight > 0;
 
@@ -161,12 +161,12 @@ export function NavBar() {
   return (
     <Fragment>
       <motion.nav
-        className={selectClass(
+        className={makeClass(
           {
             "border-separator": hairlineVisible || expanded,
             "border-transparent": !(hairlineVisible || expanded),
           },
-          "fixed top-0 w-full z-50 border-b bg-backdrop-tint backdrop-blur overflow-hidden"
+          "fixed top-0 w-full z-50 border-b bg-backdrop-tint backdrop-blur overflow-hidden",
         )}
         animate={{ height: extraHeight + 52 }}
         transition={{ type: "spring", duration: 0.3, bounce: 0 }}

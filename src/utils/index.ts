@@ -1,6 +1,4 @@
-import selectClass from "./selectClass";
-
-export { selectClass };
+export { default as makeClass } from "./makeClass";
 export {
   useOpaqueRef,
   useRefWithHandler,
