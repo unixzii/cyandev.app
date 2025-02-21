@@ -36,7 +36,7 @@ function applyTheme(theme: Theme, withAnimation: boolean) {
 
 const themeManager: ThemeManager = {
   init() {
-    let persistentTheme = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const persistentTheme = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (
       persistentTheme === "system" ||
       persistentTheme === "light" ||

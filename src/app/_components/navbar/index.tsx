@@ -53,7 +53,7 @@ const NavLinks = memo((props: NavLinksProps) => {
           "flex flex-col gap-4 pb-4": mobile,
           "hidden sm:flex flex-1 gap-4 justify-end": !mobile,
         },
-        className ? ` ${className}` : ""
+        className
       )}
     >
       <NavLink title="Posts" href="/" />
@@ -77,7 +77,7 @@ const MobileMenu = memo((props: MobileMenuProps) => {
     const newValue = !expanded;
     setExpanded(newValue);
     const targetHeight = newValue
-      ? menuInnerElementRef.current!!.clientHeight
+      ? (menuInnerElementRef.current?.clientHeight ?? 0)
       : 0;
     onExpandChanged(targetHeight);
   }

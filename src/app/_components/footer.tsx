@@ -2,7 +2,7 @@ import { FC } from "react";
 import Link from "next/link";
 import { format as formatDate } from "date-fns";
 import { ReadableArea } from "../../components/adaptive-containers";
-import { Icon } from "@/components/icon";
+import { Icon, IconType } from "@/components/icon";
 import me from "../../../data/me.json";
 import { ThemeSwitcher } from "./theme-switcher";
 
@@ -22,7 +22,7 @@ function SocialLink({
         href={href}
         aria-label={title}
       >
-        <Icon icon={icon as any} size="18px" />
+        <Icon icon={icon as unknown as IconType} size="18px" />
       </Link>
     </li>
   );
