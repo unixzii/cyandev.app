@@ -1,8 +1,10 @@
 import { Children as ReactChildren, Fragment } from "react";
+import type { Metadata } from "next";
 import type { MDXComponents } from "mdx/types";
 
 import { listPostSlugs, loadPost } from "@/data/posts";
 import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
+import { buildMetadata } from "@/utils";
 import { CodeBlock } from "./_components/CodeBlock";
 import "./styles.css";
 
@@ -53,6 +55,17 @@ export default async function Page(props: PageProps) {
 
 export async function generateStaticParams() {
   return (await listPostSlugs()).map((slug) => ({ slug }));
+}
+
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const { slug } = await props.params;
+  const { metadata } = await loadPost(slug);
+  const { title, description } = metadata;
+  return buildMetadata({
+    title,
+    description,
+    ogUrl: `/post/${slug}`,
+  });
 }
 
 export const dynamicParams = false;

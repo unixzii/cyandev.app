@@ -25,9 +25,12 @@ export const viewport: Viewport = {
     { color: "#171717", media: "(prefers-color-scheme: dark)" },
   ],
   viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
-
-export const metadata = buildMetadata({});
+export const metadata = buildMetadata();
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (

@@ -5,9 +5,7 @@ import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
 import { type PostMetadataWithSlug, listPosts } from "@/data/posts";
 
 export const metadata = buildMetadata({
-  description: "👋 Hi, I'm Cyandev. This is my personal website, welcome.",
-  ogUrl: "https://cyandev.app",
-  ogImage: "https://cyandev.app/twitter-cards/common.png",
+  title: "All Posts",
 });
 
 function PostItem({ post }: { post: PostMetadataWithSlug }) {
