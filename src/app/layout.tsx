@@ -34,7 +34,7 @@ export const metadata = buildMetadata();
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="en" data-theme="system" suppressHydrationWarning={true}>
       <head>
         <ThemeEarlyInitializer />
       </head>

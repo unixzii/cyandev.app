@@ -1,6 +1,6 @@
 // @ts-expect-error -- this is imported as a raw string.
-import scriptContent from "./early-script.raw.js";
+import earlyScript from "./early-script?raw";
 
 export default function ThemeEarlyInitializer() {
-  return <script>{scriptContent}</script>;
+  return <script>{earlyScript}</script>;
 }
