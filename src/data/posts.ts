@@ -49,6 +49,7 @@ export async function listPosts(): Promise<PostMetadataWithSlug[]> {
 }
 
 export async function loadPost(slug: string): Promise<PostModule> {
+  // Note: must use relative path to ensure the resolution is correct.
   const { default: MDXContent, metadata } = await import(
     `../../data/posts/${slug}.mdx`
   );

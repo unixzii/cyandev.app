@@ -27,6 +27,7 @@
     "date-fns": "^2.29.3",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
+    "feed": "^4.2.2",
     "invariant": "^2.2.4",
     "motion": "^11.13.1",
     "next": "^15.1.7",
