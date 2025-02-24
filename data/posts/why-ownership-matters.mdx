@@ -1,15 +1,15 @@
----
-title: 为什么所有权很重要
-tag: ProgrammingLanguage
-description: 一个在系统编程中被期待已久的特性。
-date: "2023-06-07T05:15:20.114Z"
----
+export const metadata = {
+  title: "为什么所有权很重要",
+  tags: ["pl"],
+  description: "一个在系统编程中被期待已久的特性。",
+  date: "2023-06-07T05:15:20.114Z",
+}
 
 WWDC 2023 中发布了 Swift 5.9，带来了许多新特性。大家都普遍对宏非常感兴趣，然而所有权的特性并没有引起很多关注。不过我认为这是 Swift 迭代多年以来的一个非常重要的特性，有了这个特性之后 Swift 将更具表达力，对代码有更准确的控制。
 
 让我们来一起探索一下。
 
-## 值类型
+# 值类型
 
 在讨论什么是所有权之前，我们先来说说值类型。
 
@@ -32,7 +32,7 @@ let y = x
 
 像 C++ 和 Rust 这样的语言只有值类型，但你可以通过 RAII 等特性自己实现引用类型。
 
-## 平凡类型
+# 平凡类型
 
 在 C++ 中有一个概念叫做平凡类型，它们需要具有[平凡复制](https://en.cppreference.com/w/cpp/language/copy_constructor#Trivial_copy_constructor)、[平凡移动](https://en.cppreference.com/w/cpp/language/move_constructor#Trivial_move_constructor) 构造函数，以及[平凡析构函数](https://en.cppreference.com/w/cpp/language/destructor#Trivial_destructor)。也就是说它们不可以是用户定义的。
 
@@ -43,7 +43,7 @@ let y = x
 
 值类型中的引用类型成员是被特殊处理的，编译器会保证它们会被正确释放。比如 `String` 底层会有额外的堆内存 buffer 来存储可变长度的内容，这些 buffer 都是类实现的，因此也可以通过引用计数来正确管理。
 
-## 一个常见的问题
+# 一个常见的问题
 
 引用类型很棒，你可以分配管理你自己的资源，Swift 也可以在合适的时机释放它们。但引用类型也有缺点：所有的对象都是分配在堆上的，在一些性能敏感的场景，大量的堆内存分配会带来严重的开销。
 
@@ -83,7 +83,7 @@ handleToFileA.write(...) // 💥 BOOM!
 
 如此来看，struct 管理这类资源是完全不现实的了。
 
-## Rust 是如何解决这个问题的
+# Rust 是如何解决这个问题的
 
 我们会发现，其实换成 Rust 之后问题就迎刃而解了。为什么呢？
 
@@ -125,7 +125,7 @@ Rust 另外一个非常好的点是所有的值默认都是移动语义的。除
 
 所有这些规则组成了 Rust 这个独特的特性：**[所有权](https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html)**。
 
-## Swift 中的所有权
+# Swift 中的所有权
 
 Swift 5.9 引入了「**[不可拷贝类型](https://github.com/apple/swift-evolution/blob/main/proposals/0390-noncopyable-structs-and-enums.md)**」，同时隐含了独占所有权的概念。表示底层资源的值类型适合被标记为不可拷贝，这样我们就能防止不经意地拷贝上面说的 `FileDescriptor` 了。并且因为它的所有权是独占的，在变量退出作用域时也可以被安全地释放掉。因此你可以为这类值类型添加 `deinit` 方法。
 
@@ -200,6 +200,6 @@ func appendSomething(to fd: borrowing FileDescriptor) {
 }
 ```
 
-## 总结
+# 总结
 
 所有权是一个非常棒的特性，它能够让我们写出更加内存安全的代码，同时又不需要引入额外的开销。我们称这类特性为零开销抽象，它们在系统编程中至关重要。尽管 Swift 没有强制要求我们使用所有权特性，但我们仍然应该了解它，并尽可能利用它写出更好的代码。
