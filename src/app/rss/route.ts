@@ -1,5 +1,5 @@
 import { Feed } from "feed";
-import { listPostSlugs, loadPost } from "@/data/posts";
+import { postSlugs, getPostModule } from "@/data/posts";
 import { renderPostToString } from "./renderHelper";
 
 export const dynamic = "force-static";
@@ -21,9 +21,8 @@ export async function GET() {
     },
   });
 
-  const postSlugs = await listPostSlugs();
   for (const postSlug of postSlugs) {
-    const postModule = await loadPost(postSlug);
+    const postModule = getPostModule(postSlug);
     const { title, description, date } = postModule.metadata;
     const content = await renderPostToString(postModule);
     const postUrl = `https://cyandev.app/posts/${postSlug}`;

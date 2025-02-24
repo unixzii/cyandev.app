@@ -27,8 +27,8 @@ function PostItem({ post }: { post: PostMetadataWithSlug }) {
   );
 }
 
-export default async function Page() {
-  const posts = await listPosts();
+export default function Page() {
+  const posts = listPosts();
 
   return (
     <Fragment>

@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import createMDX from "@next/mdx";
 import NextBundleAnalyzer from "@next/bundle-analyzer";
 
@@ -16,6 +17,9 @@ const nextConfig = {
       resourceQuery: /raw/,
       type: "asset/source",
     });
+    config.resolveLoader.alias["post-catalog-loader"] = path.resolve(
+      "./loaders/post-catalog-loader.js",
+    );
     return config;
   },
 };

@@ -1,11 +1,7 @@
 import { jsx } from "react/jsx-runtime";
-import { loadPost } from "@/data/posts";
+import type { PostModule } from "post-catalog-loader!";
 
-type PromiseValue<P> = P extends Promise<infer T> ? T : P;
-
-export async function renderPostToString(
-  module: PromiseValue<ReturnType<typeof loadPost>>,
-) {
+export async function renderPostToString(module: PostModule) {
   const ReactDOMServer = await import("react-dom/server");
   return ReactDOMServer.renderToString(jsx(module.MDXContent, {}));
 }

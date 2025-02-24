@@ -2,7 +2,7 @@ import { Children as ReactChildren, Fragment } from "react";
 import type { Metadata } from "next";
 import type { MDXComponents } from "mdx/types";
 
-import { listPostSlugs, loadPost } from "@/data/posts";
+import { postSlugs, getPostModule } from "@/data/posts";
 import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
 import { buildMetadata } from "@/utils";
 import { CodeBlock } from "./_components/CodeBlock";
@@ -35,7 +35,7 @@ interface PageProps {
 
 export default async function Page(props: PageProps) {
   const { slug } = await props.params;
-  const { MDXContent, metadata } = await loadPost(slug);
+  const { MDXContent, metadata } = getPostModule(slug);
   const { title, date } = metadata;
 
   return (
@@ -53,13 +53,13 @@ export default async function Page(props: PageProps) {
   );
 }
 
-export async function generateStaticParams() {
-  return (await listPostSlugs()).map((slug) => ({ slug }));
+export function generateStaticParams() {
+  return postSlugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const { slug } = await props.params;
-  const { metadata } = await loadPost(slug);
+  const { metadata } = getPostModule(slug);
   const { title, description } = metadata;
   return buildMetadata({
     title,

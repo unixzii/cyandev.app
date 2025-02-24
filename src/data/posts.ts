@@ -1,61 +1,37 @@
-import { readdir } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import type { FC } from "react";
-import type { MDXComponents } from "mdx/types";
+import {
+  type PostMetadata,
+  type PostModule,
+  slugs,
+  postModules,
+} from "post-catalog-loader!";
 
-export type PostMetadata = {
-  title: string;
-  tags: string[];
-  description?: string;
-  date: Date;
-};
 export type PostMetadataWithSlug = PostMetadata & {
   slug: string;
 };
-export type PostModule = {
-  MDXContent: FC<{ components: MDXComponents }>;
-  metadata: PostMetadata;
-};
 
-const postsPath = (() => {
-  const dirname = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(dirname, "../../data/posts");
-})();
+export const postSlugs = [...slugs];
 
-export async function listPostSlugs(): Promise<string[]> {
-  const files = await readdir(postsPath);
-  const slugs = new Set<string>();
-  for (const file of files) {
-    const components = file.split(".");
-    slugs.add(components[0]);
-  }
-  return Array.from(slugs);
-}
-
-export async function listPosts(): Promise<PostMetadataWithSlug[]> {
-  const posts = [];
-  for (const slug of await listPostSlugs()) {
-    const { metadata } = await loadPost(slug);
-    const metadataWithSlug: PostMetadataWithSlug = {
+export function listPosts(): PostMetadataWithSlug[] {
+  const realizedPosts: PostMetadataWithSlug[] = [];
+  for (const slug of slugs) {
+    const { metadata } = postModules[slug];
+    realizedPosts.push({
       ...metadata,
       date: new Date(metadata.date),
       slug,
-    };
-    posts.push(metadataWithSlug);
+    });
   }
-  posts.sort((a, b) => b.date.getTime() - a.date.getTime());
-  return posts;
+  realizedPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
+  return realizedPosts;
 }
 
-export async function loadPost(slug: string): Promise<PostModule> {
-  // Note: must use relative path to ensure the resolution is correct.
-  const { default: MDXContent, metadata } = await import(
-    `../../data/posts/${slug}.mdx`
-  );
-  metadata.date = new Date(metadata.date);
+export function getPostModule(slug: string): PostModule {
+  const { MDXContent, metadata } = postModules[slug];
   return {
     MDXContent,
-    metadata,
+    metadata: {
+      ...metadata,
+      date: new Date(metadata.date),
+    },
   };
 }
