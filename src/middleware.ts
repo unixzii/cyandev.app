@@ -20,5 +20,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config: MiddlewareConfig = {
-  matcher: ["/", "/post/:slug*"],
+  matcher: ["/", "/404", "/post/:slug*"],
 };

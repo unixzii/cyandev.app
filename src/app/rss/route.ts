@@ -23,6 +23,9 @@ export async function GET() {
 
   for (const postSlug of postSlugs) {
     const postModule = getPostModule(postSlug);
+    if (!postModule) {
+      continue;
+    }
     const { title, description, date } = postModule.metadata;
     const content = await renderPostToString(postModule);
     const postUrl = `https://cyandev.app/posts/${postSlug}`;

@@ -1,9 +1,10 @@
 import { PropsWithChildren } from "react";
 import type { Viewport } from "next";
+import { redirect } from "next/navigation";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter, Geist_Mono } from "next/font/google";
 import { ThemeClientInitializer, ThemeEarlyInitializer } from "@/theme";
-import { supportedLocales, defaultLocale } from "@/i18n";
+import { supportedLocales } from "@/i18n";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "./_components/navbar";
 
@@ -20,6 +21,7 @@ const geistFont = Geist_Mono({
 
 const fontClassNames = [interFont.variable, geistFont.variable].join(" ");
 
+export const dynamic = "force-static";
 export const viewport: Viewport = {
   themeColor: [
     { color: "#fafafa", media: "(prefers-color-scheme: light)" },
@@ -37,10 +39,9 @@ export default async function RootLayout({
   params,
   children,
 }: PropsWithChildren & { params: Promise<{ locale: string }> }) {
-  let { locale } = await params;
+  const { locale } = await params;
   if (!supportedLocales.includes(locale)) {
-    // TODO: also fix the locale segment in route.
-    locale = defaultLocale;
+    redirect("/404");
   }
 
   return (
@@ -58,4 +59,8 @@ export default async function RootLayout({
       <Analytics />
     </html>
   );
+}
+
+export function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
 }

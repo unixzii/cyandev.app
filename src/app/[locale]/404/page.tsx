@@ -1,5 +1,6 @@
 import { buildMetadata } from "@/utils";
 
+export const dynamic = "force-static";
 export const metadata = buildMetadata({
   title: "404 Not Found",
 });
