@@ -25,8 +25,12 @@ export function listPosts(): PostMetadataWithSlug[] {
   return realizedPosts;
 }
 
-export function getPostModule(slug: string): PostModule {
-  const { MDXContent, metadata } = postModules[slug];
+export function getPostModule(slug: string): PostModule | null {
+  const postModule = postModules[slug];
+  if (!postModule) {
+    return null;
+  }
+  const { MDXContent, metadata } = postModule;
   return {
     MDXContent,
     metadata: {

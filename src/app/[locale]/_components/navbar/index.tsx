@@ -8,8 +8,8 @@ import {
   useState,
   memo,
 } from "react";
-import Link from "next/link";
 import { motion } from "motion/react";
+import Link from "@/components/link";
 import { makeClass, useMediaQuery, useIntersection } from "@/utils";
 import { ReadableArea } from "@/components/adaptive-containers";
 

@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import Link from "next/link";
+import Link from "@/components/link";
 import { buildMetadata } from "@/utils";
 import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
 import { type PostMetadataWithSlug, listPosts } from "@/data/posts";

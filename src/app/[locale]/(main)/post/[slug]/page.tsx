@@ -1,5 +1,6 @@
 import { Children as ReactChildren, Fragment } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import type { MDXComponents } from "mdx/types";
 
 import { postSlugs, getPostModule } from "@/data/posts";
@@ -35,7 +36,11 @@ interface PageProps {
 
 export default async function Page(props: PageProps) {
   const { slug } = await props.params;
-  const { MDXContent, metadata } = getPostModule(slug);
+  const postModule = getPostModule(slug);
+  if (!postModule) {
+    notFound();
+  }
+  const { MDXContent, metadata } = postModule;
   const { title, date } = metadata;
 
   return (
@@ -59,7 +64,11 @@ export function generateStaticParams() {
 
 export async function generateMetadata(props: PageProps): Promise<Metadata> {
   const { slug } = await props.params;
-  const { metadata } = getPostModule(slug);
+  const postModule = getPostModule(slug);
+  if (!postModule) {
+    notFound();
+  }
+  const { metadata } = postModule;
   const { title, description } = metadata;
   return buildMetadata({
     title,

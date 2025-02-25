@@ -3,6 +3,7 @@ import type { Viewport } from "next";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter, Geist_Mono } from "next/font/google";
 import { ThemeClientInitializer, ThemeEarlyInitializer } from "@/theme";
+import { supportedLocales, defaultLocale } from "@/i18n";
 import { buildMetadata } from "@/utils";
 import { NavBar } from "./_components/navbar";
 
@@ -32,9 +33,18 @@ export const viewport: Viewport = {
 };
 export const metadata = buildMetadata();
 
-export default function RootLayout({ children }: PropsWithChildren) {
+export default async function RootLayout({
+  params,
+  children,
+}: PropsWithChildren & { params: Promise<{ locale: string }> }) {
+  let { locale } = await params;
+  if (!supportedLocales.includes(locale)) {
+    // TODO: also fix the locale segment in route.
+    locale = defaultLocale;
+  }
+
   return (
-    <html lang="en" data-theme="system" suppressHydrationWarning={true}>
+    <html lang={locale} data-theme="system" suppressHydrationWarning={true}>
       <head>
         <ThemeEarlyInitializer />
       </head>

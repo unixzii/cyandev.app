@@ -1,9 +1,9 @@
 import { FC } from "react";
-import Link from "next/link";
 import { format as formatDate } from "date-fns";
-import { ReadableArea } from "../../components/adaptive-containers";
+import { ReadableArea } from "@/components/adaptive-containers";
 import { Icon, IconType } from "@/components/icon";
-import me from "../../../data/me.json";
+import Link from "@/components/link";
+import me from "@/../data/me.json";
 import { ThemeSwitcher } from "./theme-switcher";
 
 function SocialLink({
@@ -18,6 +18,7 @@ function SocialLink({
   return (
     <li>
       <Link
+        absolute
         className="flex w-[32px] h-[32px] items-center justify-center text-secondary hover:text-primary font-light transition-colors duration-200"
         href={href}
         aria-label={title}
