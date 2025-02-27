@@ -1,24 +1,9 @@
-import { NextRequest, NextResponse, MiddlewareConfig } from "next/server";
-import { supportedLocales } from "./i18n";
+import createMiddleware from "next-intl/middleware";
+import { routing } from "@/i18n/routing";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function inferLocale(request: NextRequest): string {
-  return "en-us";
-}
+export default createMiddleware(routing);
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  const pathnameHasLocale = supportedLocales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`,
-  );
-  if (pathnameHasLocale) return;
-
-  const defaultLocale = inferLocale(request);
-  request.nextUrl.pathname = `/${defaultLocale}${pathname}`;
-  return NextResponse.redirect(request.nextUrl);
-}
-
-export const config: MiddlewareConfig = {
-  matcher: ["/", "/404", "/post/:slug*"],
+export const config = {
+  // Note: we cannot use dynamic expressions here.
+  matcher: ["/", "/(en|zh-cn)/:path*", "/((?!_next|_vercel|rss|.*\\..*).*)"],
 };

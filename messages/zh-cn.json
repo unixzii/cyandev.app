@@ -1,0 +1,10 @@
+{
+  "Navigation": {
+    "posts": "文章",
+    "about": "关于"
+  },
+  "Main": {
+    "all_posts": "所有文章",
+    "n_posts": "{count} 篇文章"
+  }
+}

@@ -1,10 +1,10 @@
 import { Children as ReactChildren, Fragment } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getFormatter } from "next-intl/server";
 import type { MDXComponents } from "mdx/types";
 
 import { postSlugs, getPostModule } from "@/data/posts";
-import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
 import { buildMetadata } from "@/utils";
 import { CodeBlock } from "./_components/CodeBlock";
 import "./styles.css";
@@ -31,11 +31,11 @@ const overrideComponents: MDXComponents = {
 };
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 }
 
 export default async function Page(props: PageProps) {
-  const { slug } = await props.params;
+  const { slug, locale } = await props.params;
   const postModule = getPostModule(slug);
   if (!postModule) {
     notFound();
@@ -43,12 +43,18 @@ export default async function Page(props: PageProps) {
   const { MDXContent, metadata } = postModule;
   const { title, date } = metadata;
 
+  const formatter = await getFormatter({ locale });
+
   return (
     <Fragment>
       <h1 className="page-title">{title}</h1>
       <p className="page-subtitle">
         <time dateTime={date.toISOString()}>
-          {formatTimestampToHumanReadableDate(+date, "long")}
+          {formatter.dateTime(+date, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
         </time>
       </p>
       <article className="mt-16 md-reader">

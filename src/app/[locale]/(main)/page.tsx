@@ -1,14 +1,22 @@
 import { Fragment } from "react";
+import { getFormatter, getTranslations } from "next-intl/server";
 import Link from "@/components/link";
 import { buildMetadata } from "@/utils";
-import { formatTimestampToHumanReadableDate } from "@/utils/date-fns";
 import { type PostMetadataWithSlug, listPosts } from "@/data/posts";
+
+type Formatter = Awaited<ReturnType<typeof getFormatter>>;
 
 export const metadata = buildMetadata({
   title: "All Posts",
 });
 
-function PostItem({ post }: { post: PostMetadataWithSlug }) {
+function PostItem({
+  post,
+  formatter,
+}: {
+  post: PostMetadataWithSlug;
+  formatter: Formatter;
+}) {
   return (
     <li className="flex flex-col gap-1 mb-8">
       <Link
@@ -21,23 +29,34 @@ function PostItem({ post }: { post: PostMetadataWithSlug }) {
         className="text-sm font-light text-secondary"
         dateTime={post.date.toISOString()}
       >
-        {formatTimestampToHumanReadableDate(+post.date)}
+        {formatter.dateTime(+post.date, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })}
       </time>
     </li>
   );
 }
 
-export default function Page() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function Page({ params }: PageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Main" });
+  const formatter = await getFormatter({ locale });
   const posts = listPosts();
 
   return (
     <Fragment>
-      <h1 className="page-title">All Posts</h1>
-      <p className="page-subtitle">{posts.length} posts</p>
+      <h1 className="page-title">{t("all_posts")}</h1>
+      <p className="page-subtitle">{t("n_posts", { count: posts.length })}</p>
       <div className="mt-16">
         <ul>
           {posts.map((post) => (
-            <PostItem key={post.slug} post={post} />
+            <PostItem key={post.slug} post={post} formatter={formatter} />
           ))}
         </ul>
       </div>

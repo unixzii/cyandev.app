@@ -14,7 +14,7 @@ const Link = forwardRef<HTMLAnchorElement, LinkProps>((props, ref) => {
   if (absolute || typeof href !== "string") {
     return <NextLink ref={ref} href={href} {...restProps} />;
   }
-  const prefix = `/${locale}${href.startsWith("/") ? "" : "/"}`;
+  const prefix = `/${locale || "en"}${href.startsWith("/") ? "" : "/"}`;
   return <NextLink ref={ref} href={`${prefix}${href}`} {...restProps} />;
 });
 Link.displayName = "Link";

@@ -1,0 +1,10 @@
+{
+  "Navigation": {
+    "posts": "posts",
+    "about": "about"
+  },
+  "Main": {
+    "all_posts": "All Posts",
+    "n_posts": "{count, plural, =1 {1 post} other {# posts}}"
+  }
+}

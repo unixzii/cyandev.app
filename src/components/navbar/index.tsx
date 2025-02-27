@@ -9,6 +9,7 @@ import {
   memo,
 } from "react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 import Link from "@/components/link";
 import { makeClass, useMediaQuery, useIntersection } from "@/utils";
 import { ReadableArea } from "@/components/adaptive-containers";
@@ -46,6 +47,7 @@ interface NavLinksProps {
 
 const NavLinks = memo((props: NavLinksProps) => {
   const { mobile, className } = props;
+  const t = useTranslations("Navigation");
   return (
     <div
       className={makeClass(
@@ -56,8 +58,8 @@ const NavLinks = memo((props: NavLinksProps) => {
         className,
       )}
     >
-      <NavLink title="posts" href="/" />
-      <NavLink title="about" href="/" />
+      <NavLink title={t("posts")} href="/" />
+      <NavLink title={t("about")} href="/" />
     </div>
   );
 });
