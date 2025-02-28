@@ -3,19 +3,14 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import Link from "@/components/link";
 import { buildMetadata } from "@/utils";
 import { type PostMetadataWithSlug, listPosts } from "@/data/posts";
-
-type Formatter = Awaited<ReturnType<typeof getFormatter>>;
-
-export const metadata = buildMetadata({
-  title: "All Posts",
-});
+import type { PageProps } from "@/types";
 
 function PostItem({
   post,
   formatter,
 }: {
   post: PostMetadataWithSlug;
-  formatter: Formatter;
+  formatter: Awaited<ReturnType<typeof getFormatter>>;
 }) {
   return (
     <li className="flex flex-col gap-1 mb-8">
@@ -39,10 +34,6 @@ function PostItem({
   );
 }
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
-}
-
 export default async function Page({ params }: PageProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Main" });
@@ -62,4 +53,12 @@ export default async function Page({ params }: PageProps) {
       </div>
     </Fragment>
   );
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Main" });
+  return await buildMetadata(locale, {
+    title: t("all_posts"),
+  });
 }

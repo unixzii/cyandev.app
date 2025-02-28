@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getFormatter } from "next-intl/server";
 import type { MDXComponents } from "mdx/types";
-
+import type { PageProps } from "@/types";
 import { postSlugs, getPostModule } from "@/data/posts";
 import { buildMetadata } from "@/utils";
 import { CodeBlock } from "@/components/reader/code-block";
@@ -30,11 +30,9 @@ const overrideComponents: MDXComponents = {
   },
 };
 
-interface PageProps {
-  params: Promise<{ slug: string; locale: string }>;
-}
+type PostPageProps = PageProps<{ slug: string }>;
 
-export default async function Page(props: PageProps) {
+export default async function Page(props: PostPageProps) {
   const { slug, locale } = await props.params;
   const postModule = getPostModule(slug);
   if (!postModule) {
@@ -68,15 +66,17 @@ export function generateStaticParams() {
   return postSlugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata(props: PageProps): Promise<Metadata> {
-  const { slug } = await props.params;
+export async function generateMetadata(
+  props: PostPageProps,
+): Promise<Metadata> {
+  const { slug, locale } = await props.params;
   const postModule = getPostModule(slug);
   if (!postModule) {
     notFound();
   }
   const { metadata } = postModule;
   const { title, description } = metadata;
-  return buildMetadata({
+  return buildMetadata(locale, {
     title,
     description,
     ogUrl: `/post/${slug}`,

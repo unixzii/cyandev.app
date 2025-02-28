@@ -6,5 +6,9 @@
   "Main": {
     "all_posts": "所有文章",
     "n_posts": "{count} 篇文章"
+  },
+  "Metadata": {
+    "title": "Cyandev",
+    "description": "Cyandev 写字儿的地方"
   }
 }

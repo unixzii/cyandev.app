@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 type PartialMetadata = {
   title: string;
@@ -7,24 +8,30 @@ type PartialMetadata = {
   ogUrl?: string;
 };
 
-const TITLE = "Cyandev";
-const DESCRIPTION = "Cyandev's personal blog";
+type Messages = {
+  title: string;
+  description: string;
+};
+
+const URL_BASE = "https://cyandev.app";
 const OG_IMAGE = "/twitter-cards/common.png";
-const OG_URL_BASE = "https://cyandev.app";
 
 function buildOpenGraph(
+  messages: Messages,
   partial?: PartialMetadata,
-): Pick<Metadata, "openGraph" | "twitter"> {
-  const title = partial?.title ? `${partial.title} | ${TITLE}` : TITLE;
-  const description = partial?.description ?? DESCRIPTION;
-  const images = OG_URL_BASE + (partial?.ogImage ?? OG_IMAGE);
+): Partial<Metadata> {
+  const title = partial?.title
+    ? `${partial.title} | ${messages.title}`
+    : messages.title;
+  const description = partial?.description ?? messages.description;
+  const images = URL_BASE + (partial?.ogImage ?? OG_IMAGE);
 
   return {
     openGraph: {
       title,
       description,
       images,
-      url: OG_URL_BASE + (partial?.ogUrl ?? "/"),
+      url: URL_BASE + (partial?.ogUrl ?? "/"),
     },
     twitter: {
       title,
@@ -33,28 +40,47 @@ function buildOpenGraph(
       site: "@unixzii",
       card: "summary_large_image",
     },
+    alternates: {
+      canonical: URL_BASE,
+      languages: {
+        "en-US": URL_BASE + "/en",
+        "zh-CN": URL_BASE + "/zh-cn",
+      },
+      types: {
+        "application/rss+xml": URL_BASE + "/rss",
+      },
+    },
   };
 }
 
-export default function buildMetadata(partial?: PartialMetadata): Metadata {
+export default async function buildMetadata(
+  locale: string,
+  partial?: PartialMetadata,
+): Promise<Metadata> {
+  const t = await getTranslations({ locale, namespace: "Metadata" });
+  const messages: Messages = {
+    title: t("title"),
+    description: t("description"),
+  };
+
   if (partial) {
     return {
       title: partial.title,
       description: partial.description,
-      ...buildOpenGraph(partial),
+      ...buildOpenGraph(messages, partial),
     };
   }
 
   return {
     title: {
-      template: `%s | ${TITLE}`,
-      default: TITLE,
+      template: `%s | ${messages.title}`,
+      default: messages.title,
     },
-    description: DESCRIPTION,
+    description: messages.description,
     icons: {
       icon: "/icon.png",
       apple: "/apple-touch-icon.png",
     },
-    ...buildOpenGraph({ title: TITLE }),
+    ...buildOpenGraph(messages),
   };
 }

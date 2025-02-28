@@ -6,5 +6,9 @@
   "Main": {
     "all_posts": "All Posts",
     "n_posts": "{count, plural, =1 {1 post} other {# posts}}"
+  },
+  "Metadata": {
+    "title": "Cyandev",
+    "description": "Cyandev's personal blog"
   }
 }
