@@ -10,5 +10,8 @@
   "Metadata": {
     "title": "Cyandev",
     "description": "Cyandev's personal blog"
+  },
+  "About": {
+    "title": "About Me"
   }
 }

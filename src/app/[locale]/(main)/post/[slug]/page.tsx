@@ -7,7 +7,6 @@ import type { PageProps } from "@/types";
 import { postSlugs, getPostModule } from "@/data/posts";
 import { buildMetadata } from "@/utils";
 import { CodeBlock } from "@/components/reader/code-block";
-import "./styles.css";
 
 const overrideComponents: MDXComponents = {
   pre(props) {

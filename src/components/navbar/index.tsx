@@ -59,7 +59,7 @@ const NavLinks = memo((props: NavLinksProps) => {
       )}
     >
       <NavLink title={t("posts")} href="/" />
-      <NavLink title={t("about")} href="/" />
+      <NavLink title={t("about")} href="/about" />
     </div>
   );
 });

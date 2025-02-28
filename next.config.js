@@ -7,12 +7,6 @@ import NextBundleAnalyzer from "@next/bundle-analyzer";
 const nextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
   reactStrictMode: true,
-  experimental: {
-    staleTimes: {
-      dynamic: 300,
-      static: 900,
-    },
-  },
   async rewrites() {
     return {
       fallback: [
