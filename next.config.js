@@ -13,6 +13,16 @@ const nextConfig = {
       static: 900,
     },
   },
+  async rewrites() {
+    return {
+      fallback: [
+        {
+          source: "/:locale/:path*",
+          destination: "/:locale/404",
+        },
+      ],
+    };
+  },
   webpack(config) {
     config.module.rules.push({
       resourceQuery: /raw/,
