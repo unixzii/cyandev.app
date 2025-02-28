@@ -6,7 +6,7 @@ import type { MDXComponents } from "mdx/types";
 
 import { postSlugs, getPostModule } from "@/data/posts";
 import { buildMetadata } from "@/utils";
-import { CodeBlock } from "./_components/CodeBlock";
+import { CodeBlock } from "@/components/reader/code-block";
 import "./styles.css";
 
 const overrideComponents: MDXComponents = {

@@ -1,6 +1,6 @@
 import { type PropsWithChildren, Fragment } from "react";
 import { ReadableArea } from "@/components/adaptive-containers";
-import { Footer } from "./_components/footer";
+import { Footer } from "@/components/footer";
 
 export default function MainLayout({ children }: PropsWithChildren) {
   return (
