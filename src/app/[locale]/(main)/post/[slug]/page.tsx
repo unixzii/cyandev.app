@@ -79,6 +79,7 @@ export async function generateMetadata(
     title,
     description,
     ogUrl: `/post/${slug}`,
+    ogImage: `/og/post/${slug}`,
   });
 }
 

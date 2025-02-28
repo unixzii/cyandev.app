@@ -9,5 +9,5 @@ export default async function middleware(request: NextRequest) {
 
 export const config = {
   // Note: we cannot use dynamic expressions here.
-  matcher: ["/", "/(en|zh-cn)/:path*", "/((?!_next|_vercel|rss|.*\\..*).*)"],
+  matcher: ["/", "/(en|zh-cn)/:path*", "/((?!_next|_vercel|rss|og|.*\\..*).*)"],
 };

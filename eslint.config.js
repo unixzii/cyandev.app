@@ -12,6 +12,14 @@ const eslintConfig = [
     },
     rules: {
       "@stylistic/indent": ["error", 2],
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
       "comma-dangle": ["error", "only-multiline"],
     },
   },
