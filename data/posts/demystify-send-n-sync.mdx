@@ -1,0 +1,221 @@
+export const metadata = {
+  title: "But What is Send and Sync?",
+  tags: ["pl", "concurrency", "rust"],
+  description: "Demystify the unique concurrency feature in Rust.",
+  date: "2023-05-30T02:20:00.000Z",
+  ogAttributes: {
+    paddingRight: 200,
+  },
+}
+
+Concurrent programming is hard, I mean it's really hard. You may have heard of many concurrency hazards, such as data races, deadlocks, priority inversions, and false sharing.….. the list goes on. Rust provides you with the harness to avoid them as much as possible, although it cannot solve everything obviously.
+
+While Rust can keep you safe in concurrent programming, it brings new mental burdens. I believe most of the Rust beginners felt overwhelmed when they saw `Send` and `Sync` for the first time, and so do I.
+
+However, Rust actually didn’t add too many features for concurrency safety. It heavily relies on the robust type system, in where `Send` and `Sync` play an important role.
+
+In this article, I will try explaining `Send` and `Sync` in the most comprehensible way. Let’s just get started!
+
+# A real-world problem
+
+There is a code snippet of C++ that exposed a very common problem in concurrent programming - **data race**:
+
+```cpp
+int main() {
+    int counter = 0;
+
+    {
+        std::jthread th1([&]() {
+            for (int i = 0; i < 10000; ++i) {
+                ++counter;
+            }
+        });
+        std::jthread th2([&]() {
+            for (int i = 0; i < 10000; ++i) {
+                ++counter;
+            }
+        });
+    }
+
+    std::cout << counter << std::endl;
+
+    return 0;
+}
+```
+
+Since `++` operator is not an atomic operation, it actually loads, modifies and stores the `counter` variable. These operations are interleaved between threads, and will lead to inconsistent. This is very easy to spot, but none of mainstream programming languages has efficient solutions for it.
+
+When you write the similar code in Rust, you will get this error:
+
+```
+error[E0277]: `*mut i32` cannot be shared between threads safely
+   --> src/main.rs:7:21
+    |
+6   |           let counter_ptr = &mut counter as *mut _;
+7   |           scope.spawn(|_| {
+    |  _______________-----_^
+    | |               |
+    | |               required by a bound introduced by this call
+8   | |             unsafe { *counter_ptr += 1; }
+9   | |         });
+    | |_________^ `*mut i32` cannot be shared between threads safely
+    |
+    = help: the trait `Sync` is not implemented for `*mut i32`
+    = note: required for `&*mut i32` to implement `Send`
+```
+
+Even we are using `unsafe` to write values to a pointer, the compiler can still complain about the thread safety issues. So how does it work? Is it a kind of compiler magic™? Let’s dig in.
+
+# Traits revisit
+
+Before talking about it, I want to refresh your memory about traits. Can you tell what can be captured by the closure `f` in the code below without a second thought?
+
+```rust
+fn foo<F>(f: F) where F: FnOnce() + Clone {
+    // ...
+}
+```
+
+It should be easy to answer: all captured variables need to implement `Clone`. But notice that it also depends on what kind of variables are captured. For example, the closure in the code below captures the same variable, but the second statement is not allowed:
+
+```rust
+let mut s = "hello".to_owned();
+foo(|| {
+    println!("{}", s);
+
+    // the trait `Clone` is not implemented for `&mut String`
+    s.push('!');
+});
+```
+
+Capturing variable by borrow also introduces other considerations, like unique immutable borrow. For simplicity’s sake, we will only discuss the **move mode** here. If you are interested in the whole story, check out [Closure types](https://doc.rust-lang.org/reference/types/closure.html) in the language reference.
+
+For move mode closures, the trait implementing rules become:
+
+- A closure is `Sync` if all captured variables are `Sync`.
+- A closure is `Send` if all values captured are `Send`.
+- …
+
+It’s important to keep these rules in mind when reading the rest of this article. And now we can continue to talk about these traits.
+
+# Sendable types
+
+A type automatically implements `Send` if it’s sendable. This is supported by a language feature called [auto traits](https://doc.rust-lang.org/reference/special-types-and-traits.html#auto-traits). For most of types, they are `Send` by default, unless **negative implementations** are written. But why?
+
+The owned values per se can ensure their uniqueness, and they are able to be sent between threads safely. For reference types (like `Arc`, borrowed values and pointers), the criteria is stricter. Rust types normally follow the mutability of their values. That means you can’t modify a value by immutable borrow. So for these types, immutable references to their values are sendable.
+
+When we want to share a value between threads, `Arc` is typically the first smart pointer type we will think about. As its name implies, it uses reference count to manage the lifetime of the inner value. And it also has the semantics of immutable borrow. Such reference types are also safe to be sent between threads, since the shared values are read-only (i.e. no data races).
+
+Therefore, the code below is valid with those guarantees:
+
+```rust
+let string = "hello".to_owned();
+let vec = vec!["foo", "bar"];
+
+#[derive(Debug)]
+struct Foo {
+    x: i32,
+    y: bool
+}
+let data = Arc::new(Foo { x: 42, y: true });
+let data_clone = Arc::clone(&data);
+
+thread::spawn(move || println!("{}", string));
+thread::spawn(move || println!("{:?}", vec));
+thread::spawn(move || println!("{:?}", data));
+thread::spawn(move || println!("{:?}", data_clone));
+```
+
+# Sharable types
+
+A type automatically implements `Sync` if it can be shared between threads. But wait, didn’t you just say immutable borrows are safe to be sendable? Let’s take a look at this code:
+
+```rust
+let counter = Cell::new(1);
+thread::scope(|scope| {
+    scope.spawn(|| {
+        counter.set(2);
+    });
+    scope.spawn(|| {
+        println!("{}", counter.get());
+    });
+});
+```
+
+`Cell` is a special type that allows you to mutate the value inside through an immutable borrow. Even if the two threads hold its immutable borrow, they can have write access to it simultaneously.
+
+There are a lot of types behave like that, and we call it **“interior mutability”**. Since mutability is not enforced on these types, we need another way evaluate whether an immutable borrow can be `Send`. And that’s what `Sync` is actually for.
+
+## Mutable across threads?
+
+You might be wondering why not just prohibit borrows of interior mutable types from being `Sync`. Well, there are some interior mutable types, which are actually safe to be `Sync`! For example, `Mutex` is an interior mutable type, but it’s designed for multithreading with synchronization.
+
+Replacing `Cell` with `Mutex`, the code now compiles and runs correctly:
+
+```rust
+let counter = Mutex::new(1);
+thread::scope(|scope| {
+    scope.spawn(|| {
+        *counter.lock().unwrap() = 2;
+    });
+    scope.spawn(|| {
+        println!("{}", counter.lock().unwrap());
+    });
+});
+```
+
+## Explicit marker
+
+Like `Send`, `Sync` is also an auto trait and need to be opt-out manually when necessary. However, you probably don’t need to care it too much, if you don’t write unsafe code. Interior mutable types in Rust standard library or third-party libraries are already marked as `!Sync` in their code. And your types become `!Sync` automatically if they contain any `!Sync` fields.
+
+You need to explicitly mark your type as `!Sync` if you want to implement your own interior mutability without thread safety guarantees.
+
+## Working with Send trait
+
+`Sync` coexists with `Send` to make sure that `Send` can handle borrows correctly. In Rust standard library, there is a generic Implementations for it:
+
+```rust
+unsafe impl<T: Sync + ?Sized> Send for &T {}
+```
+
+This means an immutable reference of a `Sync` value can be sent to another thread. The same rule apply to any other reference-like types, listed in this [documentation](https://doc.rust-lang.org/stable/std/marker/trait.Send.html).
+
+> **A side note for Swift**
+>
+
+> In Swift, `Sendable` protocol donates the same semantics as `Send` in Rust. But there is no corresponding thing to `Sync`. Because class types in Swift has the reference semantics, and their mutability are not affected by the variable mutability. Developers still need to implement `Sendable` manually for their classes with `@unchecked` attribute after auditing thread-safety carefully.
+>
+
+# Crossing the boundary
+
+To complete the puzzle of “[fearless concurrency](https://doc.rust-lang.org/book/ch16-00-concurrency.html)”, we need one more thing: [trait bounds](https://doc.rust-lang.org/reference/trait-bounds.html).
+
+When we spawn threads, we call `std::thread::spawn` and pass in a closure as the execution body. The closure is like a starship, take all the captured variables across the thread boundary. Remember what we talked about before? Trait bounds on a closure also constrain the types of its captured variables.
+
+Let’s take a look at the definition of `std::thread::spawn` function:
+
+```rust
+pub fn spawn<F, T>(f: F) -> JoinHandle<T>
+where
+    F: FnOnce() -> T + Send + 'static,
+    T: Send + 'static,
+```
+
+It makes sure that the closure is `Send` and must live as long as the program. And it also forwards these requirements to the captured variables. Glaciers will melt, dynasties will change, and the time will freeze. But you can never pass a non-thread-safe value to another thread.
+
+Different functions may have other trait bounds. `tokio::spawn` is a function for creating a new async task, and it requires a future to poll. But it still needs the future to be `Send`:
+
+```rust
+pub fn spawn<T>(future: T) -> JoinHandle<T::Output>
+where
+    T: Future + Send + 'static,
+    T::Output: Send + 'static,
+```
+
+It not only constrains the captured variables, but also requires all local variables that may cross await points to be `Send`. This is because while a task is suspended, it can be moved across threads in multi-threaded runtime. Even in single-threaded runtime, the runtime object itself can be moved to another thread. If you can’t make your captured variables sendable, then try using other APIs like `LocalSet`, which blocks the calling thread and make sure the variables won’t be accessed simultaneously.
+
+# Key Takeaways
+
+For library users, just let the compiler does all the checks, and try to understand the error messages.
+
+For library developers, trait bounds and auto trait implementations are propagate when using other safe APIs. If you have to write low-level unsafe code, be sure to check all the corner cases and then carefully add the unsafe `Send` or `Sync` implementations.

@@ -17,10 +17,11 @@ export async function GET(
 ) {
   const { slug } = await params;
 
-  const title = getPostModule(slug)?.metadata.title;
-  if (!title) {
+  const postModule = getPostModule(slug)?.metadata;
+  if (!postModule) {
     return NextResponse.json({ err: "post not found" }, { status: 404 });
   }
+  const { title, ogAttributes } = postModule;
 
   const backgroundData = await loadAsset("images/og-background.png");
   const interFontData = await loadAsset("fonts/Inter-Bold.ttf");
@@ -51,7 +52,7 @@ export async function GET(
             left: 0,
             width: "100%",
             paddingLeft: "70px",
-            paddingRight: "60px",
+            paddingRight: `${60 + (ogAttributes?.paddingRight ?? 0)}px`,
             fontFamily: "Inter",
             fontSize: 100,
           }}

@@ -7,6 +7,9 @@ declare module "post-catalog-loader!" {
     tags: string[];
     description?: string;
     date: Date;
+    ogAttributes?: {
+      paddingRight?: number;
+    };
   };
 
   export type PostModule = {
