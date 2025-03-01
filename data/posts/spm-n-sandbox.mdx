@@ -1,0 +1,293 @@
+export const metadata = {
+  title: "Swift Package Plugin 和 Sandbox 的那些事",
+  tags: ["pl", "swift"],
+  date: "2022-07-01T00:00:00.000Z",
+  ogAttributes: {
+    paddingRight: 100,
+  },
+}
+
+# 前言
+
+Apple 今年在 WWDC 22 上推出了 [**Swift Package Plugin**](https://developer.apple.com/videos/play/wwdc2022/110359) 这个全新的 SPM 特性。通过 Swift Package Plugin，开发者可以扩展 Xcode 中的菜单项和构建流程，从而实现一些研发流程上的定制化、自动化。
+
+我们知道，Apple 在 Xcode 8 中采用 **Xcode Extensions** 的全新扩展机制 deprecated 了以往没有约束的第三方插件机制。所有的 extensions 都运行在自己的独立进程中，无法随意篡改 Xcode 主程序的行为。这可以说是 Apple 的祖传艺能了，当然也极大地提升了第三方扩展的安全性。
+
+而今年的 Swift Package Plugin 又给 Xcode 提供了一个不一样的扩展点，因此我也非常好奇这次的限制在哪里，开发者到底可以通过它做什么，本文会就 **Command Plugin** 展开讨论。
+
+# 第一个 Swift Package 插件
+
+## 工程配置
+
+要在现有的 package 中增加一个插件非常简单，首先创建一个 `Plugins` 目录，并再在其中创建与插件同名的目录，然后就可以编写具体的代码文件了。此时目录结构如下：
+
+```
+MyAwesomePackage
+├── Package.swift
+├── Plugins
+│   └── Test
+│       └── plugin.swift
+├── README.md
+├── Sources
+│   └── MyLibrary
+│       └── MyLibrary.swift
+└── Tests
+    └── MyLibraryTests
+        └── MyLibraryTests.swift
+```
+
+然后修改 `Package.swift`，在 `targets` 数组中增加：
+
+```swift
+let package = Package(
+    // ...
+    targets: [
+        .plugin(
+            name: "Test",
+            capability: .command(
+                intent: .custom(verb: "test", description: "My first plugin"),
+                permissions: []))
+    ]
+)
+```
+
+至此就配置完毕了，等待 package 重新 resolve，之后便可在工程的右键菜单中看到我们的插件了。
+
+## 代码编写
+
+Swift Package Plugin 与普通的 CLI 程序没有太大的区别，我们需要为插件声明入口函数。这里我们要用到 `PackagePlugin` 这个 module，并实现 `CommandPlugin` 协议，它符合 [Type-Based Program Entry Points](https://github.com/apple/swift-evolution/blob/main/proposals/0281-main-attribute.md)。代码如下：
+
+```swift
+import PackagePlugin
+
+@main
+struct Test: CommandPlugin {
+    func performCommand(context: PluginContext, arguments: [String]) async throws {
+        // Do your work here...
+    }
+}
+```
+
+插件运行之后，`arguments` 便是 Xcode 调用我们时传入的命令行参数，在 `context` 中我们则可以拿到完整的、解析好的 package 信息，以及插件当前运行的工作目录。我们这里试着往插件工作目录中写入一个临时文件：
+
+```swift
+func performCommand(context: PluginContext, arguments: [String]) async throws {
+    let temporaryFilePath = context.pluginWorkDirectory.appending(subpath: "test.txt")
+    try! "hello".write(toFile: temporaryFilePath.string, atomically: true, encoding: .utf8)
+}
+```
+
+运行之后便可看到 `test.txt` 已经创建。当我们修改目标路径，向桌面目录中写入一个文件时，插件运行就直接报错了：
+
+```
+Test/plugin.swift:20: Fatal error: 'try!' expression unexpectedly raised an error: Error Domain=NSCocoaErrorDomain Code=513 "You don’t have permission to save the file “test.txt” in the folder “tmp”." UserInfo={NSFilePath=/var/tmp/test.txt, NSUnderlyingError=0x6000004f9d10 {Error Domain=NSPOSIXErrorDomain Code=1 "Operation not permitted"}}
+```
+
+到这里，我们其实可以初步得出结论：Swift Package Plugin 是运行在沙盒环境下的，文件读写会受控。后来我在 Activity Monitor 中也验证的确如此。
+
+# 验证 Swift Package 插件的可用权限
+
+## 网络访问
+
+使用 **Network** 框架访问 `localhost:3000` 的一个本地服务：
+
+```swift
+func performCommand(context: PluginContext, arguments: [String]) async throws {
+    let conn = NWConnection(to: .hostPort(host: .ipv4(.loopback), port: 3000), using: .tcp)
+    conn.stateUpdateHandler = {
+        print($0)
+    }
+    conn.start(queue: .main)
+    let _: Void = try await withUnsafeThrowingContinuation { cont in
+        conn.send(content: "hello".data(using: .utf8), completion: .contentProcessed({ error in
+            if let error {
+                cont.resume(with: .failure(error))
+            } else {
+                cont.resume()
+            }
+        }))
+    }
+}
+```
+
+输出 `POSIXErrorCode: Operation not permitted`，因此验证无法访问网络。
+
+## 派生子进程
+
+使用 `Process` 运行 `git` 命令：
+
+```swift
+func performCommand(context: PluginContext, arguments: [String]) async throws {
+    let process = Process()
+    process.executableURL = .init(FilePath("/usr/local/bin/git"))
+    process.arguments = ["--version"]
+
+    let pipe = Pipe()
+    let stdout = pipe.fileHandleForReading
+    process.standardOutput = pipe
+
+    try! process.run()
+    process.waitUntilExit()
+    print(String(data: try! stdout.readToEnd()!, encoding: .utf8)!)
+}
+```
+
+输出 `git version 2.36.1`，因此验证可以派生子进程。
+
+## 系统服务访问
+
+```swift
+func performCommand(context: PluginContext, arguments: [String]) async throws {
+    let pboard = NSPasteboard.general
+    pboard.clearContents()
+    pboard.setString(context.pluginWorkDirectory.string, forType: .string)
+
+    let workspace = NSWorkspace.shared
+    print(workspace.runningApplications)
+    print(workspace.open(.init(string: "https://apple.com")!))
+}
+```
+
+简单测试了几个基本服务，以上操作均失败。
+
+## GUI
+
+使用派生子进程的方式启动本地的计算器 app，计算器进程被 `SIGILL` 信号杀死（运行时发生 crash）。
+
+# macOS Sandbox 的机制
+
+## sandbox-exec(1)
+
+与 iOS 类似，macOS 也在内核层面提供了进程沙盒的支持，可以精准控制每个沙盒进程的权限（例如文件访问、Mach IPC 等系统调用）。与 iOS 不同的是，macOS 提供了一个命令行工具 `sandbox-exec`，来将沙盒的能力暴露给用户。我们可以通过 `sandbox-exec` 并配合上一个用来描述权限的 profile 文件，就可以在一个自定义的沙盒环境中执行任意进程了。
+
+> `sandbox-exec` 使用相当广泛，例如 Bazel 就通过它来实现沙盒构建，以确保构建产物的稳定性和输入输出依赖的确定性。
+
+当然，在用户态除了可以使用 `sandbox-exec` 以外，我们还可以使用 Sandbox API（`sandbox.h`）来执行沙盒相关的操作，`sandbox-exec` 在实现上也是基于 Sandbox API + `execvp`。
+
+## Sandbox Profile
+
+这里我们重点看一下 `sandbox-exec` 需要的那个 profile 文件。在系统目录 `/System/Library/Sandbox/Profiles` 下可以看到很多 `*.sb` 文件，这些都是 Sandbox Profile。我们随便来看一个文件：
+
+```lisp
+(version 1)
+
+(debug deny)
+
+(import "system.sb")
+
+;; allow processes to traverse symlinks
+(allow file-read-metadata)
+
+(allow file-read-data file-write-data
+  (regex
+    ; Allow files accessed by system dylibs and frameworks
+    #"/\.CFUserTextEncoding$"
+    #"^/usr/share/nls/"
+    #"^/usr/share/zoneinfo /var/db/timezone/zoneinfo/"
+  ))
+
+(allow ipc-posix-shm (ipc-posix-name "apple.shm.notification_center")) ; Libnotify
+
+(allow signal (target self))
+```
+
+Sandbox Profile 由 [SBPL](http://www.romab.com/ironsuite/SBPL.html) 语言编写，它的语法非常类似 Lisp，也比较容易阅读。关于 Sandbox Profile 的语法和 API，可以参考这篇 [PDF](https://reverse.put.as/wp-content/uploads/2011/09/Apple-Sandbox-Guide-v1.0.pdf)，介绍得非常完整。
+
+Sandbox Profile 的核心操作就是 `allow` 和 `deny`，这是两个方法，参数均为操作和过滤器（可选）。例如 `(allow signal (target self))` 这个语句表达的意思就是：对于**发送信号**且信号的**目标是自己**的操作，**允许执行**。对于某些严格的运行环境，我们还可以使用 `(deny default)` 禁用掉所有操作，然后使用 `allow` 方法白名单开启需要的操作。
+
+我们也可以使用通配符来对一组操作进行控制，例如 `(deny file-write*)` 这个语句会禁用以 `file-write` 为前缀的所有操作。
+
+## 进程模型
+
+值得注意的是，Sandbox 在进程上具有继承性，即父进程会将自身的 Sandbox 状态传递给所有由它派生的子进程。这个特性也非常好理解，如果一个进程派生的子进程可以逃逸沙盒，那父进程也相当于间接逃逸沙盒了。如果这样，父进程通过管道控制沙盒外的子进程，这个机制的作用就完全失效了。
+
+而 macOS 中，一个沙盒应用却可以通过 `open(1)` 或者 `NSWorkspace.open(_:)` 来以非沙盒模式启动另一个应用。这其实是系统故意留的一个“后门”，因为 Apple 理解这种情况是可控的，毕竟 Mac 作为桌面设备在权限上就会比 iPhone 这样的移动设备宽松。那这个现象是不是违背了 Sandbox 的进程模型呢，其实并没有。`open(1)` 或其他类似的启动应用方式借助的是 **Launch Services** 这个系统服务，它由 `launchd` 进程提供，应用通过 Mach IPC 与 `launchd` 交互，并最终由 `launchd` 启动应用，即可“逃逸沙盒”（其实在进程关系上，这个“子进程”的父进程是 `launchd`，与 Sandbox 的进程模型并不冲突）。
+
+# Swift Package 插件启动过程分析
+
+我们现在知道 Swift Package Plugin 是运行在沙盒环境中，但是对其具体的 profile 尚不清楚。所以这里我会通过逆向分析 Swift Package Plugin 的启动过程，来提取其运行时的 Sandbox Profile。
+
+首先需要找到一个切入点。由于 Xcode 代码日益庞大，单靠静态分析很难快速定位启动 Swift Package Plugin 的逻辑，因此这里我打算采用动态分析的方法。首先一个进程要想启动，一般会通过 `fork` + `exec*` 或者 `posix_spawn` 这几个系统调用来实现。所以这里我们先用 `dtrace` 对这几个 syscall 进行拦截（我尝试后发现是 `posix_spawn`，这里省略其他试验过程了）：
+
+```
+sudo dtrace -n 'syscall::posix_spawn:entry/pid == 79228/ { ustack(); }'
+```
+
+得到堆栈：
+
+```
+CPU     ID                    FUNCTION:NAME
+  6    655                posix_spawn:entry
+              libsystem_kernel.dylib`__posix_spawn+0xa
+              Foundation`-[NSConcreteTask launchWithDictionary:error:]+0xe97
+              SwiftPM`specialized DefaultPluginScriptRunner.invoke(compiledExec:workingDirectory:writableDirectories:readOnlyDirectories:initialMessage:observabilityScope:callbackQueue:delegate:completion:)+0xb1f
+              SwiftPM`closure #1 in DefaultPluginScriptRunner.runPluginScript(sourceFiles:pluginName:initialMessage:toolsVersion:workingDirectory:writableDirectories:readOnlyDirectories:fileSystem:observabilityScope:callbackQueue:delegate:completion:)+0x431
+              SwiftPM`partial apply for closure #1 in DefaultPluginScriptRunner.runPluginScript(sourceFiles:pluginName:initialMessage:toolsVersion:workingDirectory:writableDirectories:readOnlyDirectories:fileSystem:observabilityScope:callbackQueue:delegate:completion:)+0x52
+              SwiftPM`partial apply for closure #4 in DefaultPluginScriptRunner.compilePluginScript(sourceFiles:pluginName:toolsVersion:observabilityScope:callbackQueue:completion:)+0x59
+              SwiftPM`thunk for @escaping @callee_guaranteed () -> ()+0x19
+              libdispatch.dylib`_dispatch_call_block_and_release+0xc
+              libdispatch.dylib`_dispatch_client_callout+0x8
+              libdispatch.dylib`_dispatch_continuation_pop+0x1cc
+              libdispatch.dylib`_dispatch_async_redirect_invoke+0x2cc
+              libdispatch.dylib`_dispatch_root_queue_drain+0x157
+              libdispatch.dylib`_dispatch_worker_thread2+0xa0
+              libsystem_pthread.dylib`_pthread_wqthread+0x100
+              libsystem_pthread.dylib`start_wqthread+0xf
+```
+
+这里我们就得到了 Swift Package Plugin 的启动逻辑，看起来上层 API 使用的是 `NSTask`。对于提取 Sandbox Profile 的工作，我们只需拿到 `sandbox-exec` 的启动参数即可。
+
+在 LLDB 中下断点：
+
+```
+breakpoint set -n "-[NSConcreteTask launchWithDictionary:error:]"
+```
+
+断住后检查运行变量：
+
+```
+* thread #22, queue = 'swift.org.swiftpm.shared.concurrent', stop reason = breakpoint 3.1
+    frame #0: 0x00007ff81b68763c Foundation`-[NSConcreteTask launchWithDictionary:error:]
+Foundation`-[NSConcreteTask launchWithDictionary:error:]:
+->  0x7ff81b68763c <+0>: pushq  %rbp
+    0x7ff81b68763d <+1>: movq   %rsp, %rbp
+    0x7ff81b687640 <+4>: pushq  %r15
+    0x7ff81b687642 <+6>: pushq  %r14
+Target 0: (Xcode) stopped.
+
+(lldb) po $arg1
+<NSConcreteTask: 0x600027b5e990>
+
+(lldb) po [$arg1 arguments]
+<Swift.__SwiftDeferredNSArray 0x600009f8c580>(
+-p,
+(version 1)
+(deny default)
+(import "system.sb")
+(allow file-read*)
+(allow process*)
+(allow file-write*
+    (subpath "/private/tmp")
+    (subpath "/private/var/folders/18/rdgw2vgx4g3g_1qvr7fwfhwh0000gp/T")
+)
+(deny file-write*
+    (subpath "/private/var/tmp/redacted/MyLibrary")
+)
+(allow file-write*
+    (subpath "/Users/redacted/Library/Developer/Xcode/DerivedData/MyLibrary-dmdwxwcobwwasxgztgazmbufnwcy/SourcePackages/plugins/Test.output")
+    (subpath "/Users/redacted/Library/Developer/Xcode/DerivedData/MyLibrary-dmdwxwcobwwasxgztgazmbufnwcy/SourcePackages/plugins")
+)
+,
+/Users/redacted/Library/Developer/Xcode/DerivedData/MyLibrary-dmdwxwcobwwasxgztgazmbufnwcy/SourcePackages/plugins/Test
+)
+```
+
+可以看到插件的运行环境默认禁用了所有权限，而 `(import "system.sb")` 只会开启几个系统进程必备的权限，其中不包括任意文件读写和任意 namespace 的 Mach IPC。后面紧接着增加了几个有限制的文件读写操作以及进程操作，方便我们在插件中对文件进行修改，或者使用子进程（如 Git 这种某些操作只有文件 I/O 的工具）。
+
+上文中尝试启动计算器之所以失败，并不是因为无法派生进程，而是因为计算器进程无法创建 `NSWindow`，这个过程需要与 `WindowServer` 建立 `CGSConnectionID`，由于插件进程没有 lookup 其 namespace 的权限，因此也无法找到 Mach Port 从而进行通讯。那其他的系统服务无法使用也是同理，大部分系统服务都由名为 `xxxxxxd` 的 daemon 进程提供，clients 与服务通过 Mach Port 通讯来使用其提供的能力，系统的 frameworks 其实也只是将这些通讯封装成 High-Level APIs 提供给开发者。
+
+# 小结
+
+本文简单介绍了 Swift Package Plugin 并探索了它都可以做什么。可以发现，由于沙盒环境的限制，插件可以做的事情还是非常有限的。不过这确实符合 Apple 一贯的做事风格：在一个受限可控的环境下为系统或一方应用提供扩展能力。今年 iPadOS 也很意外的获得了[加载三方驱动](https://developer.apple.com/documentation/driverkit/creating_drivers_for_ipados)的能力，但可想而知的是，这个驱动也是基于 `DriverKit` 的受限环境，并没有与内核直接交互的能力。
+
+不过相信今年看到的 Swift Package Plugin 一定不是它的终极形态，就像 SwiftUI 一样，我们可以看到它一点点变得开放和灵活。

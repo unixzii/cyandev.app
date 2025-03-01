@@ -1,0 +1,378 @@
+export const metadata = {
+  title: "为什么 Objective-C 的属性还需要 atomic",
+  tags: ["pl", "concurrency"],
+  date: "2022-07-27T00:00:00.000Z",
+  ogAttributes: {
+    paddingRight: 120,
+  },
+}
+
+使用过 Objective-C 的朋友们应该都知道，将一个属性声明为 `atomic` 并不能解决可变对象的多线程问题。既然如此，那么这个属性存在的意义是什么呢？本文将对比多个支持引用计数的编程语言，聊聊这个古老话题的“底层逻辑”。
+
+我们知道，`atomic` 和 `nonatomic` 主要针对对象类型的属性，对于原始类型没有影响。而对于对象类型的属性，在使用 `nonatomic` 的情况下，需要保证不存在多个线程同时**读写**这个属性，否则就会产生 crash。对象类型和原始类型在属性读写上有什么区别呢？答案就是引用计数。对于下面的代码：
+
+```objective-c
+@interface SomeObject : NSObject
+
+@property (nonatomic, strong) NSObject *someProperty;
+
+@end
+```
+
+我们来看看编译器为其生成的 setter 方法（由于是生成方法，这里只会有汇编代码）：
+
+```asm
+-[SomeObject setSomeProperty:]:
+    pushq  %rbp
+    movq   %rsp, %rbp
+    subq   $0x20, %rsp
+    movq   %rdi, -0x8(%rbp)
+    movq   %rsi, -0x10(%rbp)
+    movq   %rdx, -0x18(%rbp)
+    movq   -0x18(%rbp), %rsi
+    movq   -0x8(%rbp), %rdi
+    addq   $0x8, %rdi
+    callq  objc_storeStrong  ; 关键函数
+    addq   $0x20, %rsp
+    popq   %rbp
+    retq
+```
+
+我们注意到，对于 `nonatomic` 属性来说，编译器生成的代码与栈上变量赋值相同，都是 `objc_storeStrong` 这个 runtime 函数。我们在 objc 源码中可以找到这个函数的实现：
+
+```objective-c
+void objc_storeStrong(id *location, id obj)
+{
+    id prev = *location;
+    if (obj == prev) {
+        return;
+    }
+    objc_retain(obj);
+    *location = obj;
+    objc_release(prev);
+}
+```
+
+这段代码中包含了多处操作，包括内存读写和应用计数操作，多线程执行过程中的交错点也是十分多。最典型的例子就是：两个线程均读取 `location` 到 `prev`，然后分别进行后续操作，导致的结果就是同一个对象被释放多次，从而产生悬挂指针。
+
+接下来我们来看看相同的场景，将属性换成 `atomic`，在生成代码上会有什么变化：
+
+```asm
+-[SomeObject setSomeProperty:]:
+    pushq  %rbp
+    movq   %rsp, %rbp
+    subq   $0x20, %rsp
+    movq   %rdi, -0x8(%rbp)
+    movq   %rsi, -0x10(%rbp)
+    movq   %rdx, -0x18(%rbp)
+    movq   -0x10(%rbp), %rsi
+    movq   -0x8(%rbp), %rdi
+    movq   -0x18(%rbp), %rdx
+    movl   $0x8, %ecx
+    callq  objc_setProperty_atomic  ; 关键函数
+    addq   $0x20, %rsp
+    popq   %rbp
+    retq
+```
+
+可以看到，关键函数变成了 `objc_setProperty_atomic`，这个函数的实现同样可以在源码中找到：
+
+```objective-c
+void objc_setProperty_atomic(id self, SEL _cmd, id newValue, ptrdiff_t offset)
+{
+    reallySetProperty(self, _cmd, newValue, offset, true, false, false);
+}
+
+static inline void reallySetProperty(id self, SEL _cmd, id newValue, ptrdiff_t offset, bool atomic, bool copy, bool mutableCopy)
+{
+    if (offset == 0) {
+        object_setClass(self, newValue);
+        return;
+    }
+
+    id oldValue;
+    id *slot = (id*) ((char*)self + offset);
+
+    if (copy) {
+        newValue = [newValue copyWithZone:nil];
+    } else if (mutableCopy) {
+        newValue = [newValue mutableCopyWithZone:nil];
+    } else {
+        if (*slot == newValue) return;
+        newValue = objc_retain(newValue);
+    }
+
+    if (!atomic) {
+        oldValue = *slot;
+        *slot = newValue;
+    } else {
+        spinlock_t& slotlock = PropertyLocks[slot];
+        slotlock.lock();
+        oldValue = *slot;
+        *slot = newValue;
+        slotlock.unlock();
+    }
+
+    objc_release(oldValue);
+}
+```
+
+Runtime 在解决这个问题上也十分简单，我们只需要保证属性指针的修改和旧值的获取是一个原子操作即可。这里的原子化使用的是自旋锁，同时为了避免并发度较高的情况下，锁竞争严重，使用了一个全局的 `StripedMap` 来优化，这个也是很常见的优化手段了。这里其实也可以使用 CAS 操作来取代加锁操作，不过性能上是否真的有提升还需要验证。
+
+为什么最后的 `objc_release` 不需要在锁的临界区呢？我们知道 `nonatomic` 产生问题的原因是多个线程同时获取到属性旧值并进行 release；而在 `atomic` 下，属性旧值获取的同时，新值就被设置了，不存在两个线程获取到同一个旧值的情况。而引用计数的增减，本身也是原子操作，所以对于所有权明确的场景下不需要额外加锁。
+
+# 其他语言中的引用计数支持
+
+## C++ 中的情况 (clang STL)
+
+既然 Objective-C 通过 `atomic` 属性完美解决了这个问题，C++ 中是否会存在类似的问题呢？我们也使用如下的代码来验证一下：
+
+```c++
+struct SomeObject {
+    std::shared_ptr<std::string> someProperty;
+};
+```
+
+在多线程下同时读写 `someProperty` 字段也发生了 crash，这也就是说 Objective-C 中的 `nonatomic` 并不是一种性能优化。正如 `@synchronized` 一样，`atomic` 实际上是 Objective-C 提供给我们的额外能力，方便处理这种多线程场景。
+
+在 C++ 中的 crash 原因与 Objective-C 中的 `nonatomic` 非常相似，我们也来看一下对 `someProperty` 赋值的过程发生了什么。我这里写了一个赋值函数：
+
+```c++
+void writeProperty(SomeObject *obj, std::shared_ptr<std::string> &&val) {
+    obj->someProperty = std::move(val);
+}
+```
+
+其汇编如下：
+
+```asm
+writeProperty:
+    pushq  %rbp
+    movq   %rsp, %rbp
+    subq   $0x10, %rsp
+    movq   %rdi, -0x8(%rbp)
+    movq   %rsi, -0x10(%rbp)
+    movq   -0x10(%rbp), %rdi
+    callq  std::__1::move<std::__1::shared_ptr<std::__1::basic_string<char, std::__1::char_traits<char>, <char> > >&> at move.h:27
+    movq   %rax, %rsi
+    movq   -0x8(%rbp), %rdi
+    ; 关键方法:
+    callq  std::__1::shared_ptr<std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> > red_ptr.h:989
+    addq   $0x10, %rsp
+    popq   %rbp
+    retq
+```
+
+由于 C++ 支持 `operator=` 来自定义对象赋值操作，因此简单的赋值表达式其实也是一个函数调用，这里展示的是 inline 之后的结果。而 `std::move` 是一个 cast 操作，对值内容其实没有任何影响，我们可以直接分析其中的关键方法。这个方法的符号在编译时被模板展开了，实际上对应的是 `std::shared_ptr` 如下方法：
+
+```c++
+template<class _Tp>
+inline
+shared_ptr<_Tp>&
+shared_ptr<_Tp>::operator=(shared_ptr&& __r) _NOEXCEPT
+{
+    shared_ptr(_VSTD::move(__r)).swap(*this);
+    return *this;
+}
+```
+
+这段代码看起来做了很多操作，但我们只需要关注一个地方就可以了，那就是 `this` 指针。与文章开头所讲的一样，两个线程同时执行这个操作，唯一可能相同的就是变量旧值的 `this` 指针。我们顺着调用链路继续往下：
+
+```c++
+template<class _Tp>
+inline
+void
+shared_ptr<_Tp>::swap(shared_ptr& __r) _NOEXCEPT
+{
+    _VSTD::swap(__ptr_, __r.__ptr_);
+    _VSTD::swap(__cntrl_, __r.__cntrl_);
+}
+```
+
+这里有两个 swap 操作，其实都是对指针的平凡交换操作，但不是原子的：
+
+```c++
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY __swap_result_t<_Tp> _LIBCPP_CONSTEXPR_AFTER_CXX17 swap(_Tp& __x, _Tp& __y)
+    _NOEXCEPT_(is_nothrow_move_constructible<_Tp>::value&& is_nothrow_move_assignable<_Tp>::value) {
+  _Tp __t(_VSTD::move(__x));
+  __x = _VSTD::move(__y);
+  __y = _VSTD::move(__t);
+}
+```
+
+我们考虑有两个线程同时调用到上述方法，`__x` 是新值，`__y` 是旧值，那么 `__x = __y` 这一步操作就有可能让两个线程都获取到同一个旧值。接下来，调用栈退出，在这段代码中会由于 RAII 释放两次：
+
+```c++
+template<class _Tp>
+inline
+shared_ptr<_Tp>&
+shared_ptr<_Tp>::operator=(shared_ptr&& __r) _NOEXCEPT
+{
+    shared_ptr(_VSTD::move(__r)).swap(*this);
+    return *this;
+    // 临时变量退出作用域，其表示的旧值被释放
+}
+```
+
+由此我们可以得知，虽然 C++ 在这个变量交换的过程中，由于语法特性的原因，具体的操作并不与 Objective-C 相同。但根本问题还是出在对同一个对象多次释放的问题上，因为**旧值获取与新值写入**不是原子操作。
+
+### 如何修复
+
+**Attempt 1**
+
+比较容易想到的方法就是使用 `std::mutex` 将属性赋值操作保护起来：
+
+```c++
+struct SomeObject {
+    std::mutex fieldLock;
+    std::shared_ptr<std::string> someProperty;
+};
+
+void writeProperty(SomeObject *obj, std::shared_ptr<std::string> &&val) {
+    std::unique_lock<std::mutex> lock(obj->fieldLock);
+    obj->someProperty = std::move(val);
+}
+```
+
+不过这会导致一个不大不小的性能问题，如果 `someProperty` 旧值是唯一引用的，那么在赋值之后，旧值的释放就会在锁作用域中。
+
+**Attempt 2**
+
+如果我们先构造一个临时变量承接旧值，在锁外销毁临时变量就可以优化这个潜在的性能问题。我们这里也可以通过 swap 的方式来实现这个操作：
+
+```c++
+void writeProperty(SomeObject *obj, std::shared_ptr<std::string> &&val) {
+    std::shared_ptr<std::string> temp(std::move(val));
+
+    std::unique_lock<std::mutex> lock(obj->fieldLock);
+    temp.swap(obj->someProperty);
+    lock.unlock();
+}
+```
+
+通过这种方式可以实现与 Objective-C atomic 类似的效果，首先原子地交换新值与旧值，然后在锁外释放旧值。值得注意的是，C++ 存在移动语义，第一行的临时变量其实也是与 `val` 做了一次 swap，交换之后的 `temp` 内容为 `val` 之前的内容，而 `val` 会变成一个无效对象。函数作用域退出后，`temp` 和 `val` 都会析构，但 `val` 的析构会是一个 no-op。如果开编译优化的话，`shared_ptr` 很多操作会被 inline，性能上还会更好一些。
+
+## Rust 中的情况
+
+为了更好地回答文章标题的问题，我们这里引入 Rust 的对比，来看看相同的场景在 Rust 中是如何处理的。
+
+首先我们构造相同逻辑的代码：
+
+```rust
+use std::sync::Arc;
+use std::thread;
+
+struct SomeObject {
+    some_field: Arc<String>,
+}
+
+fn make_shared_string() -> Arc<String> {
+    Arc::new("this is a string".to_owned())
+}
+
+#[test]
+fn test() {
+    let mut obj = SomeObject {some_field: make_shared_string()};
+    thread::scope(|s| {
+        for _ in 0..12 {
+            s.spawn(|| {
+                obj.some_field = make_shared_string();
+            });
+        }
+    });
+}
+```
+
+编译之后我们会得到一个错误：`obj` 被多次可变引用了，这在 Rust 中是不允许的。
+
+编译器如何判断闭包在结束之后仍然捕获外部变量呢？我们看到标准库中对于 Scope `spawn` 的实现：
+
+```rust
+#[stable(feature = "scoped_threads", since = "1.63.0")]
+pub fn spawn<F, T>(&'scope self, f: F) -> ScopedJoinHandle<'scope, T>
+where
+    F: FnOnce() -> T + Send + 'scope,
+    T: Send + 'scope,
+{
+    Builder::new().spawn_scoped(self, f).expect("failed to spawn thread")
+}
+```
+
+可以看到，闭包 `F` 的生命周期与 Scope 本身相同，意味着里面的被捕获变量也将持续至 Scope 的销毁。单一可变引用又是 Rust 的重要原则之一，通过这种限制阻止竞态访问和一些[其他问题](https://stackoverflow.com/questions/58364807/why-rust-prevents-from-multiple-mutable-references)。
+
+既然不能存在多份可变引用，只构造多份不可变引用总可以吧。我们可以使用 "Interior Mutability" 来实现我们的需求吗：
+
+```rust
+struct SomeObject {
+    some_field: Cell<Arc<String>>,
+}
+```
+
+答案是不可以，因为 `Cell` 没有实现 `Sync`，因此包含 `Cell` 引用的类型将不会实现 `Send`，这些变量自然就不能跨越线程边界。很有趣的是，当我们观察 `Cell::set` 的实现可以发现：
+
+```rust
+impl<T> Cell<T> {
+    // ...
+
+    #[inline]
+    #[stable(feature = "rust1", since = "1.0.0")]
+    pub fn set(&self, val: T) {
+        let old = self.replace(val);
+        drop(old);
+    }
+
+    #[stable(feature = "move_cell", since = "1.17.0")]
+    pub fn replace(&self, val: T) -> T {
+        // SAFETY: This can cause data races if called from a separate thread,
+        // but `Cell` is `!Sync` so this won't happen.
+        mem::replace(unsafe { &mut *self.value.get() }, val)
+    }
+
+    // ...
+}
+```
+
+这个实现与 C++ 里 `shared_ptr` 交换的实现一致：都是获取旧值，设置新值，销毁旧值。在没有锁保护的情况下，旧值会被释放两次。
+
+### 如何修复
+
+方法其实也非常简单，多线程场景直接使用 `Mutex` 就可以了，我们修改字段类型：
+
+```rust
+struct SomeObject {
+    some_field: Mutex<Arc<String>>,
+}
+```
+
+更新字段的操作也该为锁内 swap + 锁外 drop：
+
+```rust
+// ...
+s.spawn(|| loop {
+    let mut new_value = make_shared_string();
+    {
+        let mut some_field_guard = obj.some_field.lock().unwrap();
+        std::mem::swap(&mut new_value, &mut *some_field_guard);
+    }
+});
+```
+
+Rust 对 `Mutex` 的设计非常优秀，每个 `Mutex` 都显式绑定了一个值。值要在多线程中被读写，就一定要被 `Mutex` 保护。所有实现 `Send` 的类型，都可以在套上 `Mutex` 后变成 `Sync`。而对于具有内部可变性的对象（例如 `Arc`），在多线程中使用时可以不被保护，但实际上线程安全要由对象自己负责。
+
+> **为什么 `Mutex` 不能让所有的对象都变成 `Sync`？**
+>
+> 对于 `!Send` 类型（例如 `Rc`），他们一般会表示某些共享资源，而类型没有考虑多线程场景下的处理。例如当 `Rc` 被移动到不同的线程，很有可能出现两个线程同时 drop `Rc` 导致的引用计数不一致。
+
+除此之外，`mem::swap` 与单一可变借用原则也可以保证，在能够执行 swap 的上下文中，线程安全是一定会被保证的，我们无法写出不安全的 swap 操作。
+
+所以通过 Rust，我们能够更好地理解文章标题所提的这个问题。拆解一下，`Mutex<Arc<T>>` 涉及了两个线程安全的保证：
+
+1.  `Arc` 自身对于引用计数的原子性修改的保证，这里采用 Atomic 操作实现；
+2.  `Mutex` 对于 `Arc` 指针修改的保护，防止多线程操作中，由于脏值的存在，多次释放 `Arc`。
+
+也就是说，引用计数机制本身是否为线程安全，与在多线程操作同一个对象的同一个属性并无关系。
+
+# Wrap Up
+
+文章看似分析了几个系统编程语言（严格说 Objective-C 不算）中的引用计数机制在多线程下的表现，但其实解释了线程安全的本质：在对象模型中，一个对象的线程安全，不意味着所有使用这个对象的场景都是线程安全的。外部对象如果不是线程安全的，即使操作了一个线程安全的对象，也有可能出现逻辑错误。本文中的引用计数只是一个例子，而恰恰这个例子涉及内存操作，很容易出现明显的 segfault。我们在日常开发中可能还会遇到其他的多线程场景，缺乏线程安全保护的逻辑问题更加不容易察觉，因此也更值得我们注意。
