@@ -1,6 +1,7 @@
 @layer base {
   html {
     scroll-padding-top: 100px;
+    -webkit-font-smoothing: antialiased;
   }
 
   body {
