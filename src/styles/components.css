@@ -7,7 +7,6 @@
 
   .page-subtitle {
     font-size: var(--text-base);
-    font-weight: var(--font-weight-light);
     line-height: 1;
     color: var(--color-secondary);
     margin-top: calc(var(--spacing) * 6);
@@ -15,7 +14,6 @@
 
   .md-reader {
     color: var(--color-body);
-    font-weight: var(--font-weight-light);
     line-height: 28px;
 
     h1,
@@ -105,8 +103,6 @@
 
     pre {
       code {
-        font-weight: var(--font-weight-light);
-
         &::before,
         &::after {
           content: none;
@@ -115,11 +111,11 @@
     }
 
     blockquote {
-      margin: calc(var(--spacing) * 5) 0;
+      margin: calc(var(--spacing) * 6) 0;
       padding: calc(var(--spacing) * 1) calc(var(--spacing) * 4);
       border-left: 3px solid var(--color-separator);
-      color: var(--color-primary);
-      font-weight: var(--font-weight-normal);
+      font-style: italic;
+      color: var(--color-secondary);
 
       p {
         margin: calc(var(--spacing) * 2) 0;

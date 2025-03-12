@@ -21,7 +21,7 @@ function PostItem({
         {post.title}
       </Link>
       <time
-        className="text-sm font-light text-secondary"
+        className="text-sm text-secondary"
         dateTime={post.date.toISOString()}
       >
         {formatter.dateTime(+post.date, {

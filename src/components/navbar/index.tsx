@@ -30,7 +30,7 @@ const NavLink = memo((props: NavLinkProps) => {
 
   return (
     <Link
-      className="py-1 sm:py-0 text-secondary hover:text-primary font-light transition-colors duration-200"
+      className="py-1 sm:py-0 text-secondary hover:text-primary transition-colors duration-200"
       href={href}
       aria-label={title}
     >

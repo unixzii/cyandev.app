@@ -49,7 +49,7 @@ export const Footer: FC = () => {
     <footer className="pb-12 md:pb-16">
       <ReadableArea className="flex items-start justify-between">
         <div>
-          <p className="mb-2 text-secondary text-sm font-light">
+          <p className="mb-2 text-secondary text-sm">
             © {formatDate(Date.now(), "yyyy")} Cyandev
           </p>
           <SocialLinks />
