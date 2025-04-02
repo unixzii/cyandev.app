@@ -1,12 +1,25 @@
 import { PropsWithChildren } from "react";
+import type { Viewport } from "next/types";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { RootLayout } from "@/components/root-layout";
 import { buildMetadata } from "@/utils";
 import type { PageProps } from "@/types";
 
+import "@/styles/globals.css";
+
 export const dynamic = "force-static";
 export const dynamicParams = false;
+
+export const viewport: Viewport = {
+  themeColor: [
+    { color: "#fafafa", media: "(prefers-color-scheme: light)" },
+    { color: "#171717", media: "(prefers-color-scheme: dark)" },
+  ],
+  viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default async function Layout({
   params,
