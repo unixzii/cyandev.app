@@ -12,10 +12,6 @@ export const dynamic = "force-static";
 export const dynamicParams = false;
 
 export const viewport: Viewport = {
-  themeColor: [
-    { color: "#fafafa", media: "(prefers-color-scheme: light)" },
-    { color: "#171717", media: "(prefers-color-scheme: dark)" },
-  ],
   viewportFit: "cover",
   width: "device-width",
   initialScale: 1,

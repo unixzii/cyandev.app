@@ -12,9 +12,16 @@ interface ThemeManager {
 const LOCAL_STORAGE_KEY = "app_theme";
 const THEME_TRANSITION_CLASS = "theme-transition";
 
+const LIGHT_THEME_COLOR = "#fafafa";
+const DARK_THEME_COLOR = "#171717";
+
 const listeners = new Set<() => void>();
 let currentTheme: Theme = "system";
 let clearTransitionTimer: number | null = null;
+
+let lightThemeColorMeta: HTMLMetaElement | null = null;
+let darkThemeColorMeta: HTMLMetaElement | null = null;
+
 function applyTheme(theme: Theme, withAnimation: boolean) {
   currentTheme = theme;
 
@@ -30,6 +37,24 @@ function applyTheme(theme: Theme, withAnimation: boolean) {
     }, 300);
   }
   root.dataset["theme"] = theme;
+
+  if (!lightThemeColorMeta || !darkThemeColorMeta) {
+    lightThemeColorMeta = document.createElement("meta");
+    lightThemeColorMeta.name = "theme-color";
+    lightThemeColorMeta.media = "(prefers-color-scheme: light)";
+    darkThemeColorMeta = document.createElement("meta");
+    darkThemeColorMeta.name = "theme-color";
+    darkThemeColorMeta.media = "(prefers-color-scheme: dark)";
+
+    const head = document.head;
+    head.appendChild(lightThemeColorMeta);
+    head.appendChild(darkThemeColorMeta);
+  }
+
+  lightThemeColorMeta.content =
+    theme === "dark" ? DARK_THEME_COLOR : LIGHT_THEME_COLOR;
+  darkThemeColorMeta.content =
+    theme === "light" ? LIGHT_THEME_COLOR : DARK_THEME_COLOR;
 
   listeners.forEach((f) => f());
 }
