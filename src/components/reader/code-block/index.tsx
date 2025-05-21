@@ -31,7 +31,7 @@ function extractCodeInfo(className: string): CodeInfo {
 export async function CodeBlock(props: CodeBlockProps) {
   const { originalClassName, code } = props;
   const codeInfo = extractCodeInfo(originalClassName ?? "");
-  const html = await codeToHtml(code, {
+  const html = await codeToHtml(code.trimEnd(), {
     lang: codeInfo.language,
     themes: {
       light: "github-light-default",

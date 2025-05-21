@@ -15,9 +15,10 @@
     min-width: 100%;
     flex-direction: column;
     font-size: var(--text-sm);
-    line-height: 26px;
 
     & > span {
+      height: 23px;
+      line-height: 23px;
       flex-grow: 1;
       padding: 0 calc(var(--spacing) * 4);
     }
