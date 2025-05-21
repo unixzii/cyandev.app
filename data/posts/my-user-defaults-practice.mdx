@@ -1,0 +1,241 @@
+export const metadata = {
+  title: "一种优雅处理 UserDefaults 的实践",
+  tags: ["swift"],
+  date: "2025-05-20T12:00:00.000Z",
+  ogAttributes: {
+    paddingRight: 120,
+  },
+}
+
+我们在开发 app 时经常会与 `UserDefaults` 打交道，但当项目体量慢慢变大时，如何维护好众多的设置项就变成了一个难题。这篇笔记就来分享一下我的做法，也许不是最佳实践，但我自己用下来感觉还是比较舒适的。
+
+# 定义类型安全的 key
+
+原生 `UserDefaults` 最大的问题就是 key 与类型没有强绑定关系，系统提供了一系列 getter 方法，但都需要我们自己保证传入的 key 是我们希望的类型。在应用规模不断变大之后，很可能会出现新的代码错误使用其他类型的情况。这时我们就需要一种类型安全的 defaults 定义机制了。
+
+我们的目标是让所有的 default keys 有固定的类型和默认值（包括 suite name，如果有的话） 。这样在后续业务逻辑中访问它们时，就一定不会出现调用到错误类型接口的情况。
+
+为了实现这样的绑定，我们可以声明一个 struct 来存储关于一个 default key 的元信息：
+
+```swift
+public struct DefaultKey<T: DefaultValue> {
+
+    let key: String
+    let defaultValue: T
+    let suiteName: String?
+
+    var store: UserDefaults {
+        return suiteName.flatMap { UserDefaults(suiteName: $0) } ?? .standard
+    }
+
+    init(key: String, defaultValue: T) {
+        self.init(key: key, defaultValue: defaultValue, suiteName: nil)
+    }
+
+    init(key: String, defaultValue: T, suiteName: String?) {
+        self.key = key
+        self.defaultValue = defaultValue
+        self.suiteName = suiteName
+    }
+}
+```
+
+同时为了约束 default 值的类型，我们这里定义了一个 `DefaultValue` 协议，上面 `DefaultKey` 的泛型 T 要求实现这个协议。这样一来我们就能够保证在定义 key 时，其对应的类型是能够被 `UserDefaults` 兼容的。以下是这个协议的内容：
+
+```swift
+public protocol DefaultValue {
+
+    static func read(from store: UserDefaults, withKey key: String) -> Self?
+
+    func write(to store: UserDefaults, withKey key: String)
+}
+```
+
+我们可以为常见的类型扩展这个协议的实现：
+
+```swift
+extension Bool: DefaultValue {
+
+    public static func read(from store: UserDefaults, withKey key: String) -> Bool? {
+        return (store.object(forKey: key) as? NSNumber)?.boolValue
+    }
+
+    public func write(to store: UserDefaults, withKey key: String) {
+        store.set(self, forKey: key)
+    }
+}
+
+extension String: DefaultValue {
+
+    public static func read(from store: UserDefaults, withKey key: String) -> String? {
+        return store.string(forKey: key)
+    }
+
+    public func write(to store: UserDefaults, withKey key: String) {
+        store.set(self, forKey: key)
+    }
+}
+
+// …
+```
+
+现在我们就可以这样定义一个 default key 了：
+
+```swift
+public let automaticallyUpdate = DefaultKey(key: "AutomaticallyUpdate", defaultValue: true)
+```
+
+把这个定义放在某个公共模块中，其他模块通过这个变量便可获取到关于这个 key 的所有信息。这里你可能会问，为什么不直接将所有的设置项封装到一个类中呢？其他模块都通过这个类来访问设置项不也可以保证一致性和类型安全吗？别着急，后文我们就会说到将 default key 单独定义出来的好处了。
+
+# 合理划分命名空间
+
+现在 key 有了详细的定义，已经可以解决一部分问题了。但随着功能的增加，将所有设置项杂糅在一起显然也不是什么很好的做法。因此我们也要为设置项合理地划分命名空间，这样不仅可以使我们的代码看起来更清晰，也方便做分模块的可见性，一举多得。
+
+我这里使用了 struct 来存储设置项，同一类的设置项放在一起，并将这些 structs 称为 scopes。同时我们再声明一个协议来方便后续为这些 scopes 增加约束：
+
+```swift
+public protocol DefaultScope {
+
+    static var instance: Self { get }
+}
+```
+
+而一个 scope 看起来是这样的：
+
+```swift
+public struct GeneralSettingsScope: DefaultScope {
+
+    public static var instance: GeneralSettingsScope = .init()
+
+    public let automaticallyUpdate = DefaultKey(key: "AutomaticallyUpdate", defaultValue: true)
+    public let warnBeforeQuitting = DefaultKey(key: "WarnBeforeQuitting", defaultValue: false)
+}
+```
+
+为了将这些分散的 scopes 集中在一起，我们可以再声明一个 enum（使用 enum 是因为它不需要被实例化），让它作为一个入口：
+
+```swift
+@frozen
+public enum DefaultScopes { }
+```
+
+没错，这个 `DefaultScopes` 就是一个名义类型，它并没有任何的内容。而我们可以通过扩展的方式，将 scope 挂载到这个入口上：
+
+```swift
+public extension DefaultScopes {
+
+    var general: GeneralSettingsScope.Type { GeneralSettingsScope.self }
+}
+```
+
+这里解释一下 scope 为什么要这样定义。因为空 enum 没有 case 是无法被实例化的，因此其实非 static 成员正常情况下是访问不到的。而我们可以通过 `KeyPath` 魔法获取到这个成员变量的类型，并且我们也只需要这个 scope 的类型。还记得上面定义的 `DefaultScope` 协议吗？我们可以通过 `instance` 属性获取到这个 scope 的实例（通过在协议里声明 init requirement 也可以）。
+
+# 定义入口类型
+
+有了上面这些准备，我们就可以正式编写与业务代码交互的入口类型了。我希望在业务代码里这样读取和写入一个设置项：
+
+```swift
+let _ = Defaults.general.automaticallyUpdate
+
+Defaults.general.automaticallyUpdate = true
+```
+
+这一个表达式需要拆分成两部分来看：命名空间和 default key。每一个都需要不同的类型来处理，我们先看后半部分，通过 scope 访问 defaults。这里我定义了一个辅助类型 `ScopedDefaultContainer`，业务代码不直接构造它，但可以通过它的实例访问某一个 scope 的 defaults。我们直接看它的定义：
+
+```swift
+@dynamicMemberLookup
+public struct ScopedDefaultContainer<S: DefaultScope> {
+
+    let scope: S
+
+    public subscript<T: DefaultValue>(dynamicMember keyPath: KeyPath<S, DefaultKey<T>>) -> T {
+        get {
+            let key = scope[keyPath: keyPath]
+            return .read(from: key.store, withKey: key.key) ?? key.defaultValue
+        }
+        set {
+            let key = scope[keyPath: keyPath]
+            newValue.write(to: key.store, withKey: key.key)
+        }
+    }
+
+    init(_ scopeType: S.Type) {
+        self.scope = S.instance
+    }
+}
+```
+
+`ScopedDefaultContainer` 通过一个 scope 的类型构造，然后配合 `@dynamicMemberLookup` 可以在它的实例上访问到这个 scope 的所有 `DefaultKey`。并且通过自定义 getter、setter 就能完成对 default value 的读取和写入。
+
+> 这里提醒一下，`read` 和 `write` 方法都来自上文定义的 `DefaultValue` 协议。
+
+接下来我们看如何构造这个 container，也就是实现我们的入口类型 `Defaults`。其实与 `ScopedDefaultContainer` 的实现类似，我们还是需要用到 `@dynamicMemberLookup`，只不过是实现 static subscript 方法：
+
+```swift
+@dynamicMemberLookup
+public enum Defaults {
+
+    public static subscript<S: DefaultScope>(
+        dynamicMember keyPath: KeyPath<DefaultScopes, S.Type>
+    ) -> ScopedDefaultContainer<S> {
+        return .init(S.self)
+    }
+}
+```
+
+能够看到，我们并没有直接使用传入的 `keyPath` 参数，而是通过 `keyPath` 反向得到了泛型 `S`。有了这个 scope 类型之后，我们也就可以直接构造 `ScopedDefaultContainer` 了。
+
+到此，整套 UserDefaults 设施就搭建好了。
+
+# 与 SwiftUI 一起使用
+
+SwiftUI 中提供了 `AppStorage` 来在 `View` 中方便地访问 user defaults，但我认为它的设计在实际使用中并不方便。例如它并不能在 SwiftUI 以外的场景使用（虽然目前也能工作，但也属于未定义行为），也不方便在多个 `View` 之间共享。我们这里并不能解决 `AppStorage` 在其他场景“无法使用”的问题，但我们仍然可以解决 SwiftUI 和其他框架共享 default keys 的问题。
+
+上面的定义如何能够被 SwiftUI 所利用呢？我们不妨扩展 `AppStorage` 类型：
+
+```swift
+import SwiftUI
+
+public extension AppStorage {
+
+    init<S: DefaultScope>(
+        _ scopeKeyPath: KeyPath<DefaultScopes, S.Type>,
+        key keyPath: KeyPath<S, DefaultKey<Value>>
+    ) where Value == Bool {
+        let key = S.instance[keyPath: keyPath]
+        self.init(wrappedValue: key.defaultValue, key.key, store: key.store)
+    }
+
+    init<S: DefaultScope>(
+        _ scopeKeyPath: KeyPath<DefaultScopes, S.Type>,
+        key keyPath: KeyPath<S, DefaultKey<Value>>
+    ) where Value == String {
+        let key = S.instance[keyPath: keyPath]
+        self.init(wrappedValue: key.defaultValue, key.key, store: key.store)
+    }
+
+    // …
+}
+```
+
+这样一来，我们就可以用之前定义的 key 来初始化 `AppStorage`，类型、默认值都实现了一致性。它在实际的代码中看起来就是这样：
+
+```swift
+struct MyView: View {
+
+    @AppStorage(\.general, key: \.automaticallyUpdate)
+    private var automaticallyUpdate
+
+    var body: some View {
+        // …
+    }
+}
+```
+
+# 小结
+
+本文我们实现了一套类型安全的 `UserDefaults` 封装，它非常轻量，甚至都不足以做成一个库。但确实可以帮我们提升代码质量，减少潜在的问题。当然，我这里也只是起到一个抛砖引玉的作用，大家可以根据自己项目的情况做一些改良。对于这套封装我们最后总结一下：
+
+1. 尽可能暴露元数据，而不是只提供方法
+2. 使用 `KeyPath`、反射等手段来减少模板代码
+3. 根据框架选择合适的方案，善于曲线救国
