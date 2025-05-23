@@ -33,6 +33,7 @@ export async function CodeBlock(props: CodeBlockProps) {
   const codeInfo = extractCodeInfo(originalClassName ?? "");
   const html = await codeToHtml(code.trimEnd(), {
     lang: codeInfo.language,
+    tabindex: false,
     themes: {
       light: "github-light-default",
       dark: "github-dark-default",
@@ -45,6 +46,10 @@ export async function CodeBlock(props: CodeBlockProps) {
       })) ?? [],
   });
   return (
-    <div className="code-block" dangerouslySetInnerHTML={{ __html: html }} />
+    <div
+      className="code-block"
+      tabIndex={-1}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }
