@@ -1,0 +1,281 @@
+export const metadata = {
+  title: "Swift Concurrency 中的隔离",
+  tags: ["pl", "concurrency", "swift"],
+  description: "解密 Swift Concurrency 中的隔离究竟是什么东西。",
+  date: "2025-06-14T12:00:00.000Z",
+  ogAttributes: {
+    paddingRight: 200,
+  },
+}
+
+隔离（isolation）可能是 Swift Concurrency 中一个比较难理解的概念，每年 Swift 团队都会对其进行迭代来提升可用性，但它至今仍然会给很多开发者带来困惑。借着 WWDC25 所带来的变化，这篇文章就来详细讲解一下隔离这个概念。
+
+> 虽然本文提到的很多特性和概念与 Rust 中的比较类似，但理解它们并不需要你对 Rust 有任何了解，大家可放心阅读。
+
+# 什么是线程安全
+
+在正式讨论 Swift 之前，我们简单回顾一下线程安全。顾名思义，线程安全指一段代码在多线程的环境下能够正常工作且不会产生任何非预期行为（如竞态、数据损坏、程序崩溃等）。进程和线程都是实现并发的手段，而由于线程之间共享同一个地址空间，因此更容易出现线程安全的问题。
+
+解决线程安全的传统手段通常会引入互斥锁机制，它可以保证一个资源或一段代码不会同时在多个线程上被访问或执行，从而避免了竞态问题。但锁也存在一定的局限性，例如使用不当可能会造成死锁，锁的粒度和优先级控制不好会造成 CPU 饥饿，以及过多的锁操作会导致上下文切换频繁等。基于这些考虑，就会有很多新的线程安全机制诞生出来，例如基于原子操作的无锁（lock-free）数据结构，actor 模式等等... 而 Swift 就选择了 actor 模式作为它的首选并发编程模型。
+
+# 什么是 Actor
+
+[Actor](https://en.wikipedia.org/wiki/Actor_model) 其实是一个有很长历史的概念了，比较有代表性的就是 Erlang 编程语言。在 Erlang 中，每个 actor 是一个独立的“进程”，拥有自己的状态和行为，并可以与其他 actors 进行通信。每个 actor 都有隔离的内存空间，可以从根本上避免线程安全的问题。这种基于消息传递通讯的模式在很多其他的编程语言中也有应用，例如 Golang 就推崇通过通讯来共享内存，而不是通过共享内存来通信。
+
+在这种模式下，各个模块都被视为一个独立的单元，内部串行执行，而彼此之间又是并发执行的。它们之间通过接收和发送消息来交互，从而组成一套有机的系统。你也可以把 actor 想象成进程、服务器，总之它对外表现为一个封闭的黑盒，外界无法直接访问和修改其中的数据和状态，只能通过给它发消息来让它自己操作。
+
+由于 actor 彼此之间相互独立，Swift 因此也把这种独立的运行环境称为**隔离（isolation）**。
+
+## 举个例子
+
+设想我们现在需要开一家银行，它对外提供开户和存款服务。那么我们可以用如下的代码来表示这个银行：
+
+```swift
+actor Bank {
+
+    typealias Account = String
+
+    let name: String
+    var balances: [Account: Int] = [:]
+
+    init(name: String) {
+        self.name = name
+    }
+
+    func openAccount(named name: String) {
+        if balances[name] == nil {
+            balances[name] = 0
+        }
+    }
+
+    func deposit(_ amount: Int, to account: String) -> Bool {
+        guard let balance = balances[account] else {
+            return false
+        }
+        balances[account] = balance + amount
+        return true
+    }
+}
+```
+
+这里使用了 `actor` 来替代 `class`，我们获得了什么保证呢？首先就是每个 `Bank` 实例的状态是绝对安全稳定的，只要它的内部代码没有逻辑问题，那么它在任何线程环境下被访问都不会出现数据损坏的问题。此外，在保证安全的情况下，每个 actor 之间又能尽可能做到并发，从而提升系统的执行效率。
+
+# Actor 提供隔离
+
+如上面所说，每个 actor 都提供了一套隔离的运行环境，也就是说每个 actor 实例都是一个隔离。隔离的对象之间不能直接进行互相访问，例如下面的代码：
+
+```swift{4,8}
+func wireTransfer(_ amount: Int, from account: String, to anotherAccount: String, at anotherBank: Bank) {
+    guard let balance = balances[account], balance >= amount else {
+        return
+    }
+    guard let peerBalance = anotherBank.balances[anotherAccount] else {
+        return
+    }
+    balances[account] = balance - amount
+    anotherBank.balances[anotherAccount] = peerBalance + amount
+}
+```
+
+很遗憾，编译器会提示：
+
+```
+Actor-isolated property 'balances' can not be referenced on a nonisolated actor instance
+```
+
+我们无法操作另一个 `Bank` 实例的状态，即使我们是同一个类。这是因为不同的 `Bank` 实例属于不同的隔离，`self` 的 `wireTransfer(_:from:to:at:)` 方法在执行过程中存在于 `self` 的隔离，而访问 `anotherBank` 内部状态需要在 `anotherBank` 的隔离下。那我们要操作 `anotherBank` 该怎么办呢？答案是**发消息**！当我们尝试调用另一个隔离环境的方法时，这个调用就会隐式地变成一个消息，发消息的过程是异步的，因此我们需要这样写：
+
+```swift{0,5}
+func wireTransfer(_ amount: Int, from account: String, to anotherAccount: String, at anotherBank: Bank) async {
+    guard let balance = balances[account], balance >= amount else {
+        return
+    }
+    balances[account] = balance - amount
+    guard await anotherBank.deposit(amount, to: anotherAccount) else {
+        balances[account] = balance + amount
+        return
+    }
+}
+```
+
+可以发现，对 `anotherBank` 调用 `deposit(_:to:)` 方法变成异步的了，因为这就是一个消息传递。Swift 会等待被调用的 actor 处理结束并取得结果，而不像 Erlang 那样需要手动接收结果。
+
+## Global Actor 提供统一隔离
+
+有些时候我们不希望某些对象之间是隔离的，试想每个 `UIView` 如果都是一个隔离，到处充满 await，那平时写代码要多累呢。**Global Actor** 就可以解决我们这个问题。我们可以使用 `@globalActor` 关键字来声明一个 global actor：
+
+```swift
+@globalActor
+actor BankActor: GlobalActor {
+
+    typealias ActorType = BankActor
+
+    static let shared: BankActor = .init()
+}
+```
+
+然后我们就可以把 `Bank` 改成受 `BankActor` 保护的类型了：
+
+```swift
+@BankActor
+class Bank {
+    // ...
+}
+```
+
+与此同时，在 `Bank` 对象的方法中对其他 `Bank` 对象的操作也不需要消息传递了，因为他们都在一个隔离中：
+
+```swift{0,5}
+func wireTransfer(_ amount: Int, from account: String, to anotherAccount: String, at anotherBank: Bank) {
+    guard let balance = balances[account], balance >= amount else {
+        return
+    }
+    balances[account] = balance - amount
+    guard anotherBank.deposit(amount, to: anotherAccount) else {
+        balances[account] = balance + amount
+        return
+    }
+}
+```
+
+在开发应用时，我们最常打交道的 global actor 就是 `MainActor` 了，它代表了主线程（也就是 UI 线程）。一些不涉及太多网络和数据库操作的轻量级应用通常只需要一个线程即可，这样也不会存在线程安全的问题。虽然在单线程应用中不需要与其他 actor 打交道，但 `MainActor` 的存在也可以帮助我们避免写出一些意料之外的错误代码，比如不小心在一个子线程的回调中更新 UI。
+
+## 隔离与线程的关系
+
+上面我们提到的不管是 actor 还是 global actor，我们在心智模型上可以认为是一个个独立的线程，因此一个 actor 或者一组属于相同 global actor 的对象不会出现在多线程中并发执行代码的情况。但本质上 actor 提供的是隔离，而并不是彼此之间并发执行的保障。
+
+在 Swift 中，actor 底层是由 `SerialExecutor` 来调度并执行代码的，而 `SerialExecutor` 则提供了隔离。正如其名，每个 `SerialExecutor` 实现中的 task 是串行执行的，因此属于同一个 `SerialExecutor` 的 actor 永远不会出现并发执行的代码。对于独立的 actor（在 runtime 中称为 root actor），runtime 提供了一个[特殊](https://github.com/swiftlang/swift/blob/00aa22f7b26abeaef60b37fc456d1c5d4f7c336b/include/swift/ABI/Executor.h#L103)的 `SerialExecutor` 实现。
+
+当从一个 actor 中调用另一个 actor 时，当前线程会发生一次 [**task switching**](https://github.com/swiftlang/swift/blob/00aa22f7b26abeaef60b37fc456d1c5d4f7c336b/stdlib/public/Concurrency/Actor.cpp#L2445)。此时 runtime 会判断两个 actor 是否同属一个隔离（也就是具有相同的 `SerialExecutor`），如果同属一个隔离，那么当前线程将直接执行另一个 actor 的代码而无需切换；如果不属于，则需要进行真正的切换了。但这里 runtime 还有一个小优化，它会继续判断被调用的 actor 能否复用当前 actor 的线程。对于 root actor 来说，如果没有特殊要求，它们是可以复用线程的。也就是说，如果被调用的 actor 没有在其他线程执行，那么它就可以直接复用当前线程来执行自己的代码。如果的确需要调度，那么 runtime 就会向被调用 actor 的 `SerialExecutor` 中 enqueue 这个 task。
+
+对于 root actor 来说，它们的 `SerialExecutor` 在 Darwin 平台下使用的还是 GCD，也就是会共享一个线程池。由于 Swift 是一个跨平台编程语言，每个平台提供的多线程能力各不相同，因此默认 `SerialExecutor` 的底层实现也不尽相同。这里我们可以认为：**隔离提供的是不会被并发执行的保证，但并不是独享一个线程的保证。**
+
+# 非隔离环境
+
+很多时候我们并不会指定一个类型属于某个 actor 或 global actor，在 Swift 6.2 之前，这个类型就是非隔离的（`nonisolated`）。非隔离类型或函数不要求自己一定运行在某个隔离中，因此它可以在任何地方被调用。当然，它们也缺乏保障机制来确保自己在不同线程被访问时不会出现数据损坏。`nonisolated class` 通常都不是 `Sendable` 的，也就是不能被发送到其他线程或隔离中。
+
+一般情况下，如果一个类的角色是工具类，它通常都不需要被 actor 保护。例如一个 JSON decoder，它可能有一些内部状态，但通常不会在不同线程中被同时使用，那么它完全就可以是 `nonisolated` 的。这样的类型使用起来会更灵活，不会出现 await 传染的情况。
+
+`nonisolated` 的 async 函数通常还会被自动调度到其他线程中运行，因为它们不要求被隔离，因此也没有必要占用当前隔离的线程，可以使程序更高效。如果你不需要这个行为，可以使用 `nonisolated(nonsending)` 这个新的关键字来阻止这个函数的自动调度：
+
+```swift
+nonisolated func foo() async {
+    // Run in arbitrary thread.
+}
+
+nonisolated(nonsending) func bar() async {
+    // Run in caller's current thread.
+}
+
+@MainActor
+func main() {
+    await foo()
+    await bar()
+}
+```
+
+出于线程安全的考虑，`nonisolated` 不能应用于可变变量。如果有额外的保障机制，比如使用一个锁来控制并发访问，可以使用 `nonisolated(unsafe)` 关键字强制把一个变量声明为非隔离的。
+
+此外，actor 或受 global actor 保护的类也可以拥有 `nonisolated` 的属性和方法。如一个 `UIView` 子类可以声明一个不可变的 identifier，以在任何环境中都可以访问：
+
+```swift
+class MyView: UIView {
+
+    nonisolated let identifier: String
+}
+
+let view = MyView(identifier: "my-view")
+DispatchQueue.global().async {
+    print(view.identifier)  // ok
+}
+```
+
+当然，`nonisolated` 的方法不能访问自己没有被 `nonisolated` 标记的属性或方法，即便它在运行时是被自己的 isolated 方法调用的，因此我们需要合理规划我们的代码。
+
+# Protocol 对隔离的要求和保证
+
+我们在写应用时也经常会与 protocol 打交道，尤其是 SDK 提供的 protocol。很多 protocol 都会有 `@MainActor` 的标记，那么它意味着什么呢？首先我们先来看看没有任何隔离约束的 protocol，试想下面的代码存在什么样的问题：
+
+```swift
+protocol Auditable {
+
+    func audit() -> Bool
+}
+
+extension Bank: Auditable {
+
+   func audit() -> Bool {
+       return !hasSuspiciousAccounts(from: self.balances.keys)
+   }
+}
+```
+
+`Auditable` 不存在任何隔离约束，意味着它可以在任何隔离或非隔离环境下使用。但 `Bank` 类型很显然需要在 `BankActor` 隔离下才能访问，于是这里出现了冲突，编译器会提示：
+
+```
+Global actor 'BankActor'-isolated property 'balances' can not be referenced from a nonisolated context
+```
+
+这里存在的问题是 `Auditable` protocol 的约束太少了，导致**使用方**可以在任意环境使用它，而 protocol 实现方 `Bank` 有 `BankActor` 隔离要求不一定被使用方满足。出现这种情况是比较难解决的，除非让 protocol 的提供方修改（如改为 async 方法），否则只能自己更换其他方案。某些情况下，如果我们明确知道某个第三方提供的非隔离 protocol 只会在 `MainActor` 下被使用，那么我们可以使用 `assumeIsolated(_:file:line:)` 方法强制访问隔离代码，但这非常危险，需要谨慎使用。
+
+前面我们提过，很多 SDK 提供的 protocol 会被 `@MainActor` 标记，这其实并不是要求它的实现方也需要被 `@MainActor` 标记。就像 SwiftUI 里的 `Shape` 为了性能会并发计算 path，因此实现 `Shape` 的类型通常会标记为 `nonisolated`。但这并不妨碍它实现被 `@MainActor` 标记的 `View` protocol。与标记在其他类型上类似，标记在 protocol 上的 global actor 标记只是要求使用方在指定隔离环境下使用，而实现方完全可以根据自身需求灵活调整。对于 `nonisolated` 类型，实现一个被隔离的 protocol 与实现一个非隔离 protocol 没有任何区别。而对于被隔离类型，实现被其他 global actor 隔离的 protocol 与实现非隔离 protocol 类似，因为 protocol 的这些方法不在同一个隔离下，因此它们也无法访问自身被隔离的属性和方法。
+
+在今年发布的 Swift 6.2 中还新增了一个 **Global-actor isolated conformances** ([SE-0470](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0470-isolated-conformances.md)) 的特性，它允许我们在指定隔离环境下实现某个 protocol。例如上面的例子，`Auditable` 是非隔离协议，但我们可以让 `Bank` 只在 `BankActor` 环境中实现它：
+
+```swift{0}
+extension Bank: @BankActor Auditable {
+
+   func audit() -> Bool {
+       return !hasSuspiciousAccounts(from: self.balances.keys)
+   }
+}
+```
+
+这样一来，只要某个 `Bank` 实例是在 `BankActor` 环境中使用，它就是实现了 `Auditable` 协议的：
+
+```swift
+nonisolated func auditAll(_ targets: [any Auditable]) -> Bool {
+    return targets.allSatisfy { $0.audit() }
+}
+
+Task { @BankActor in
+    auditAll([bank1, bank2])  // ok
+}
+
+Task { @MainActor in
+    auditAll([bank1, bank2])  // error: Global actor 'BankActor'-isolated
+                              // conformance of 'Bank' to 'Auditable' cannot
+                              // be used in main actor-isolated context
+}
+```
+
+这个特性一定程度上解决了 protocol 在 Swift Concurrency 下的适用性的问题，毕竟连 Apple 自己也苦于不方便给 view model 实现 `Equatable` 这种抽象问题，这也是 [SE-0470](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0470-isolated-conformances.md) 提案的原始动机。不过目前编译器的实现还存在一些 soundness 的 bug，距离在生产环境使用还有一段路要走。
+
+# 简单聊聊 Sendable
+
+多线程问题之所以存在，是因为我们很多类型都是 `Sendable` 的，这些类型的变量允许在线程之间传递。值类型传递时发生拷贝，本质上是变成了两个独立的对象，一般来说问题不大；但引用类型传递时是共享内存，因此可能会在多线程中同时操作同一个对象，导致线程安全问题。Swift 的 class 当存在可变属性时将不会自动实现 `Sendable`，从而避免我们不小心把这个类的实例发到其他线程去。而如果这个 class 是被隔离的，包括 actor，那么它就会自动实现 `Sendable`，因为编译器会保证对象在使用时是隔离的。
+
+对于引用类型，如果我们能够确保某个对象是独占的，那么它也是可以被随意发送到其他线程的，因为没有多个引用就意味着不可能存在同时访问。**Region based Isolation** ([SE-0414](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0414-region-based-isolation.md)) 提案就是为了实现这个目的的，它可以允许我们将刚创建好的非 `Sendable` 对象传递给 actor。但这并不足够，因为有的时候我们可能需要跨函数传递一个对象，但如果一个对象是被入参表示的，那编译器就无法确定它的独占性了。于是在 [SE-0430](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0430-transferring-parameters-and-results.md) 提案中又引入了 `sending` 关键字，用来解决独占对象跨函数传递的问题。这里举一个具体的例子：
+
+```swift
+nonisolated class Account {
+
+    // account details...
+}
+
+func openAccount(for user: User, in bank: Bank) async {
+    let account = createAccount(for: user)
+    await verifyAndAdd(account: account, to: bank)
+}
+
+func verifyAndAdd(account: sending Account, to bank: Bank) async {
+    // check the validity of account...
+    await bank.add(account)
+}
+
+func createAccount(for user: User) -> sending Account {
+    // create the account...
+}
+```
+
+我们看到 `sending` 可以作用于两个位置的类型，即函数参数和函数返回值。当 `sending` 作用于函数参数时，表示该参数是一个独占对象，此时这个参数就是这个对象的唯一引用，因此它可以被安全地发送到其他线程；当 `sending` 作用于函数返回值时，表示该返回值也是一个独占对象，接收它的变量也是这个对象的唯一引用。编译器会保证标记了 `sending` 的对象在函数体内不会出现引用逃逸的情况，确保对象引用的唯一性。有了这个标记，非 `Sendable` 对象的适用性就大大提升了，可以让我们在使用 actor 时更加方便。
