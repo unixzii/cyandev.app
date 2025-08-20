@@ -7,8 +7,23 @@ import type { PageProps } from "@/types";
 import { postSlugs, getPostModule } from "@/data/posts";
 import { buildMetadata } from "@/utils";
 import { CodeBlock } from "@/components/reader/code-block";
+import { Image } from "@/components/reader/image";
 
 const overrideComponents: MDXComponents = {
+  p(props) {
+    if (ReactChildren.count(props.children) === 1) {
+      const child = ReactChildren.toArray(props.children)[0];
+      if (
+        typeof child === "object" &&
+        "type" in child &&
+        child.type === "img"
+      ) {
+        // eslint-disable-next-line jsx-a11y/alt-text
+        return <Image {...child.props} />;
+      }
+    }
+    return <p {...props} />;
+  },
   pre(props) {
     if (ReactChildren.count(props.children) === 1) {
       const child = ReactChildren.toArray(props.children)[0];
