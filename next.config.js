@@ -9,6 +9,12 @@ const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
     return {
+      beforeFiles: [
+        {
+          source: "/blog/rss.xml",
+          destination: "/rss",
+        },
+      ],
       fallback: [
         {
           source: "/:locale/:path*",
