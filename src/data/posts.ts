@@ -5,27 +5,36 @@ import {
   postModules,
 } from "post-catalog-loader!";
 
-export type PostMetadataWithSlug = PostMetadata & {
+export type RefinedPostMetadata = Omit<PostMetadata, "date"> & {
+  date: Date;
+};
+
+export type PostMetadataWithSlug = RefinedPostMetadata & {
   slug: string;
 };
 
-export const postSlugs = [...slugs];
+export type RefinedPostModule = Omit<PostModule, "metadata"> & {
+  metadata: RefinedPostMetadata;
+};
+
+export const postSlugs = [...slugs].sort((a, b) => {
+  const dateA = new Date(postModules[a].metadata.date);
+  const dateB = new Date(postModules[b].metadata.date);
+  return +dateB - +dateA;
+});
 
 export function listPosts(): PostMetadataWithSlug[] {
-  const realizedPosts: PostMetadataWithSlug[] = [];
-  for (const slug of slugs) {
+  return postSlugs.map((slug) => {
     const { metadata } = postModules[slug];
-    realizedPosts.push({
+    return {
       ...metadata,
       date: new Date(metadata.date),
       slug,
-    });
-  }
-  realizedPosts.sort((a, b) => b.date.getTime() - a.date.getTime());
-  return realizedPosts;
+    };
+  });
 }
 
-export function getPostModule(slug: string): PostModule | null {
+export function getPostModule(slug: string): RefinedPostModule | null {
   const postModule = postModules[slug];
   if (!postModule) {
     return null;

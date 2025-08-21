@@ -6,7 +6,7 @@ declare module "post-catalog-loader!" {
     title: string;
     tags: string[];
     description?: string;
-    date: Date;
+    date: string;
     ogAttributes?: {
       paddingRight?: number;
     };
