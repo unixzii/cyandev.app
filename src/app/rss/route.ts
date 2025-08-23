@@ -13,7 +13,7 @@ export async function GET() {
     description: "Cyandev's personal blog",
     id: BASE_URL,
     link: BASE_URL,
-    image: `${BASE_URL}/twitter-cards/common.png`,
+    image: `${BASE_URL}/apple-touch-icon.png`,
     favicon: `${BASE_URL}/favicon.ico`,
     copyright: "All rights reserved 2025, Cyandev",
     author: {
