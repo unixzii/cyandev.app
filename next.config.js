@@ -17,6 +17,10 @@ const nextConfig = {
       ],
       fallback: [
         {
+          source: "/:locale/posts/:id",
+          destination: "/:locale/post/:id",
+        },
+        {
           source: "/:locale/:path*",
           destination: "/:locale/404",
         },

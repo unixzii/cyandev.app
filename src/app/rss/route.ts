@@ -4,20 +4,22 @@ import { renderPostToString } from "./renderHelper";
 
 export const dynamic = "force-static";
 
+const BASE_URL = "https://cyandev.app";
+
 export async function GET() {
   // TODO: add other metadata.
   const feed = new Feed({
     title: "Cyandev",
     description: "Cyandev's personal blog",
-    id: "https://cyandev.app",
-    link: "https://cyandev.app",
-    image: "https://cyandev.app/twitter-cards/common.png",
-    favicon: "https://cyandev.app/favicon.ico",
+    id: BASE_URL,
+    link: BASE_URL,
+    image: `${BASE_URL}/twitter-cards/common.png`,
+    favicon: `${BASE_URL}/favicon.ico`,
     copyright: "All rights reserved 2025, Cyandev",
     author: {
       name: "Cyandev",
       email: "unixzii@gmail.com",
-      link: "https://cyandev.app",
+      link: BASE_URL,
     },
   });
 
@@ -28,14 +30,14 @@ export async function GET() {
     }
     const { title, description, date } = postModule.metadata;
     const content = await renderPostToString(postModule);
-    const postUrl = `https://cyandev.app/posts/${postSlug}`;
     feed.addItem({
       title,
       description,
       date,
       content,
-      id: postUrl,
-      link: postUrl,
+      // Use `/posts` to maintain compatibility with a historical bug.
+      id: `${BASE_URL}/posts/${postSlug}`,
+      link: `${BASE_URL}/post/${postSlug}`,
     });
   }
 
