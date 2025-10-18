@@ -1,0 +1,316 @@
+export const metadata = {
+  title: "编译期安全的 Builder",
+  tags: ["rust"],
+  description: "在 Rust 中使用类型体操实现编译期安全的 Builder 模式。",
+  date: "2025-10-18T14:58:35.617Z",
+}
+
+[Builder 模式](https://rust-unofficial.github.io/patterns/patterns/creational/builder.html)是 Rust 代码中一种很常见的设计模式，它可以让我们通过简洁流畅的语句来配置和创建一个对象。但它也有一个显著的弊端，那就是对于非可选字段没有静态检查的能力。假设有如下一个结构体：
+
+```rust
+pub struct Person {
+    name: String,
+    gender: Gender,
+    birth_date: u64,
+    address: Option<String>,
+}
+```
+
+其中的前三个字段是必选的，那么它的 builder 要么就只能在 new 的时候将这些字段一并设置好，要么就只能在 build 的时候做运行时检查，并且通常还需要返回一个 `Result` 类型。这无疑可能将一些程序员的错误暴露到生产环境，至少推迟了这类低级错误的发现。
+
+```rust
+fn main() {
+    let person = PersonBuilder::new()
+        .name("John Doe")
+        .gender(Gender::Male)
+        .build()
+        .unwrap();  // panic: `birth_date` is not set
+
+    println!("Hello, {}!", person.name);
+}
+```
+
+现代编程语言大多都具有安全构造结构体的语法，可以在编译时检查结构体的字段是否都初始化完全。那我们可否在 builder 模式中也实现类似的静态检查呢？借助类型系统，答案是肯定的。
+
+# 一些基础概念
+
+## 名义类型系统 vs 结构类型系统
+
+编程语言的类型系统可以区分为**名义类型系统** ([Nominal type system](https://en.wikipedia.org/wiki/Nominal_type_system)) 和**结构类型系统** ([Structural type system](https://en.wikipedia.org/wiki/Structural_type_system)) 两种。简单来说，名义类型系统会通过名称来区分不同的类型，而结构类型系统会根据类型的内部结构（如属性、方法等）来区分不同的类型。常见的编译型语言都会采用名义类型系统，一些语言甚至还会将类型信息 encode 到运行时，从而实现一些运行时类型检查。而结构类型系统最典型的例子就是 TypeScript，不管类型名是什么，只要内部结构相同，就可以相互兼容。
+
+名义类型系统得益于其根据名称区分类型的特性，可以很轻松地给相同的数据结构嵌入不同的额外信息，同时不影响其内存布局（方便编译器优化）。而如果恰好语言有完善的泛型系统，我们就可以在编译期通过“类型体操”来为同一套结构实现不同的行为。
+
+## Newtype 模式
+
+[Newtype 模式](https://doc.rust-lang.org/rust-by-example/generics/new_types.html)是指为同一个底层类型定义不同的外部类型，它可以让我们更充分地利用名义类型系统。例如一个 `u64` 的数字都可以表示质量和能量，而通过定义 kg 和 kJ 的 newtype 类型，我们就可以避免两种不同类型的数字的混用，从而实现了更进一步的类型安全。
+
+相比之下，type alias 只是为一个已有的类型（可能书写比较复杂）定义一个别名，方便我们在不同地方去展开。但它并没有定义新的类型，这个别名在编译期与其原始类型的行为是完全一样的。对于结构类型系统，所有的类型名都像是一个结构的别名，结构本身才是真正的类型名。那么在这类语言中，我们就需要通过改变结构来实现 newtype，例如常见的 [branded type 模式](https://www.learningtypescript.com/articles/branded-types)。不过这不是本文的重点，总之我们只需要实现类型的区分即可。
+
+# 第一次尝试
+
+想要实现编译期检查其实很简单，我们马上想到的就是为 builder 的不同阶段定义不同的类型，并且只在最后阶段的类型中提供 build 方法。我们可以定义如下一组类型：
+
+```rust
+struct PersonBuilderStage0;
+
+struct PersonBuilderStage1 {
+    name: String,
+}
+
+struct PersonBuilderStage2 {
+    stage1: PersonBuilderStage1,
+    gender: Gender,
+}
+
+struct PersonBuilderStage3 {
+    stage2: PersonBuilderStage2,
+    birth_date: u64,
+}
+```
+
+每个阶段的 builder 都只接受对应阶段的字段，设置之后返回下一个阶段的 builder。这很容易实现，但它也存在一个比较大的弊端，就是初始化顺序不够灵活。我们必须按照一个既定的顺序构造对象，但可能有时候我们并不能按照设计的顺序获取所需的字段值。所以我认为这不是我想要的最终形态。
+
+# 第二次尝试
+
+既然我们想要初始化顺序灵活，那么我们是否可以在每个阶段都提供通往其他剩余阶段的路径？比如对于设置了 `name` 的场景，接下来既可以设置 `gender` 进入 stage A，又可以设置 `birth_date` 进入 stage B。然后 stage A 设置 `birth_date` 或者 stage B 设置 `gender` 即可进入 stage C，即可 build 的阶段。
+
+这似乎是一个可行的思路，但简单计算一下就知道，我们需要 `1 + 3! + 1 = 8` 个阶段的类型。假设我们增加更多的字段，即使使用过程宏也不是一个很 scalable 的方案。
+
+# 第三次尝试
+
+由于每个 setter 方法都只设置一个字段，那么我们可否通过比特位来标记设置了哪些字段呢？以上面三个必选字段为例，我们需要 3 位来表示设置的状态，即依然是 8 个状态。每个 setter 方法都将对应位的值设置为 1，当状态等于 `0b111` 也就是 8 时即可进行 build 操作。
+
+这似乎是一个可行的思路，但问题是如何将这些比特位嵌入到类型中。C++ 的模板可以接受常量作为参数，并且可以参与计算，我们很容易实现位运算和特化。然而不幸的是，Rust 的泛型常量计算并没有 stabilized，所以我们只能选择另辟蹊径。其实类型本身也可以表示值，如定义 `One`、`Two`、`Three` 等类型。但它也有前面说到的不 scalable 的问题，我们要手动实现不同数值的计算。那有没有什么比较 scalable 的类型表示方法呢？我们不妨使用链表的思路，定义如下的类型：
+
+```rust
+#[derive(Default)]
+pub struct Bits<B, R> {
+    bit: PhantomData<B>,
+    rest: PhantomData<R>,
+}
+```
+
+这个类型中的泛型 B 表示当前位的值，泛型 R 表示剩余的高位。然后我们再定义如下三个数值类型：
+
+```rust
+#[derive(Default)]
+pub struct True;
+#[derive(Default)]
+pub struct False;
+#[derive(Default)]
+pub struct Terminal;
+```
+
+这样一来，数字 5 即 `0b101` 就可以表示为 `Bits<True, Bits<False, Bits<True, Terminal>>>`。然后我们就可以定义几个 type alias 来方便表示一些数字：
+
+```rust
+type B000 = Bits<False, Bits<False, Bits<False, Terminal>>>;
+type B100 = Bits<True, Bits<False, Bits<False, Terminal>>>;
+type B010 = Bits<False, Bits<True, Bits<False, Terminal>>>;
+type B001 = Bits<False, Bits<False, Bits<True, Terminal>>>;
+type B111 = Bits<True, Bits<True, Bits<True, Terminal>>>;
+```
+
+有了数字的类型表示，我们接下来就需要实现位运算了。首先实现单个位的或操作，我们可以借助标准库中的 [`BitOr`](https://doc.rust-lang.org/stable/std/ops/trait.BitOr.html) trait，它支持不同类型间的计算恰好满足我们的需求。由于是类型级别的操作，我们必须手动实现每种情况的逻辑，即列举完成的真值表。我们可以定义先一个宏来方便书写：
+
+```rust
+macro_rules! impl_bit_or {
+    { $($lhs:ty | $rhs:ty => $output:ty),* } => {
+        $(
+            impl BitOr<$rhs> for $lhs {
+                type Output = $output;
+
+                fn bitor(self, _rhs: $rhs) -> Self::Output {
+                    Default::default()
+                }
+            }
+        )*
+    };
+}
+```
+
+然后根据真值表进行实现：
+
+```rust
+impl_bit_or! {
+    False | False => False,
+    False | True => True,
+    True | False => True,
+    True | True => True,
+    Terminal | Terminal => Terminal
+}
+```
+
+现在我们就可以进行类型级别的运算了，例如 `<False as BitOr<True>>::Output` 即可获得一个 `True` 类型。基础的准备工作做好了，我们再来实现完整的按位或：
+
+```rust
+impl<LhsB, LhsR, RhsB, RhsR> BitOr<Bits<RhsB, RhsR>> for Bits<LhsB, LhsR>
+where
+    LhsB: BitOr<RhsB>,
+    LhsR: BitOr<RhsR>,
+    <LhsB as BitOr<RhsB>>::Output: Default,
+    <LhsR as BitOr<RhsR>>::Output: Default,
+{
+    type Output = Bits<<LhsB as BitOr<RhsB>>::Output, <LhsR as BitOr<RhsR>>::Output>;
+
+    fn bitor(self, _rhs: Bits<RhsB, RhsR>) -> Self::Output {
+        Default::default()
+    }
+}
+```
+
+这其实就是一个递归的过程，首先这个 impl 可以为 `Bits<X, Y>` 实现与 `Bits<A, B>` 的按位或操作。那么具体的结果还是 `Bits<...>` 类型，但对于它的两个泛型参数我们继续做处理。第一个泛型参数表示的是这个值的 LSB 即最低位，它只能是 `True` 或 `False`，因此我们增加约束 `LhsB: BitOr<RhsB>`，并且通过 `<LhsB as BitOr<RhsB>>::Output` 来计算这两个位的或操作结果。第二个泛型参数依然可能是 `Bits<...>` 类型本身，有可能是 `Terminal` 终止子类型，同时它们都实现了 `BitOr` 这个 trait，因此也可以计算出对应位的或操作结果。
+
+类型计算写好之后，我们就可以在 builder 的方法签名中使用它了。首先定义 `PersonBuilder` 类型，携带一个泛型来表示已设置的字段：
+
+```rust
+pub struct PersonBuilder<SetFields> {
+    name: Option<String>,
+    gender: Option<Gender>,
+    birth_date: Option<u64>,
+    _phantom: PhantomData<SetFields>,
+}
+```
+
+`PersonBuilder` 刚创建时没有设置任何字段，因此泛型对应的是前面定义的 `B000`：
+
+```rust
+impl PersonBuilder<B000> {
+    pub fn new() -> Self {
+        PersonBuilder {
+            name: None,
+            gender: None,
+            birth_date: None,
+            _phantom: PhantomData,
+        }
+    }
+}
+```
+
+接下来实现 setter 方法，我们这里以 `name` 字段为例。由于它是第一个字段，我们让它在设置好后将 `SetFields` 的第一位变成 `True`。用上面定义的类型操作就是 `<SetFields as BitOr<B100>>::Output`，方法的完整代码如下：
+
+```rust
+impl<SetFields> PersonBuilder<SetFields> {
+    #[inline]
+    pub fn name(self, name: impl Into<String>) -> PersonBuilder<<SetFields as BitOr<B100>>::Output>
+    where
+        SetFields: BitOr<B100>,
+    {
+        PersonBuilder {
+            name: Some(name.into()),
+            gender: self.gender,
+            birth_date: self.birth_date,
+            _phantom: PhantomData,
+        }
+    }
+
+    // ...
+}
+```
+
+最后我们就可以对 `PersonBuilder<B111>` 进行特化了，它表示所有字段都已设置的状态，为其实现 `build` 方法：
+
+```rust
+impl PersonBuilder<B111> {
+    fn build(self) -> Person {
+        Person {
+            name: self.name.unwrap(),
+            gender: self.gender.unwrap(),
+            birth_date: self.birth_date.unwrap(),
+        }
+    }
+}
+```
+
+# 更友好的错误提示
+
+至此，一个能够静态检查的 builder 就实现好了。但它还有一个小小的问题，就是错误提示并不友好。假设有如下的用法：
+
+```rust
+fn main() {
+    let person = PersonBuilder::new()
+        .name("John Doe")
+        .gender(Gender::Male)
+        .build();
+
+    println!("Hello, {}!", person.name);
+}
+```
+
+编译期会提示：
+
+```
+no method named build found for struct PersonBuilder<Bits<True, Bits<True, Bits<False, Terminal>>>> in the current scope
+the method was found for
+- PersonBuilder<Bits<True, Bits<True, Bits<True, Terminal>>>>
+```
+
+这对于使用方来说可能会看着一头雾水，尤其是当字段多了以后。那有没有什么更好的提示方式呢？
+
+我认为这里有很多种改进方式，我的选择是在没有配置完所有字段时依然提供 `build` 方法，但返回一个特殊的类型，通过类型名来提示使用方发生了什么。这样一来，我们既可以阻止后面的编译（因为构造出来的并不是 `Person` 类型，依赖它的地方类型会不匹配），也可以在编译时和运行时提供更丰富的错误提示。不过我的方案需要用到一个 nightly 特性 — [specialization](https://github.com/rust-lang/rfcs/blob/master/text/1210-impl-specialization.md)，所以这里也只是抛砖引玉一下，也许有还更好的办法。
+
+## Specialization 101
+
+Rust 原本的 impl 块是不能引入 overlap 的，也就是说不能有一个类型同时可以命中两个及以上的 impl 块。起初，Rust 想通过这个特性来提升某些场景的性能，尤其是 iterator 相关的。我们可以在大部分类型复用同一份代码的同时，为某些类型做单独的优化。目前这个特性有一个最小子集 min_specialization，不过它并不能满足我们的需求，因为他不支持 associated type 的特化。
+
+要为某个类型特化 trait 实现，我们不需要修改原有的 trait 定义，只需要在更通用的 impl 块中为某些实现添加 `default` 修饰符即可，正如 RFC 中的例子：
+
+```rust
+impl<T> Example for T {
+    default type Output = Box<T>;
+    default fn generate(self) -> Box<T> { Box::new(self) }
+}
+
+impl Example for bool {
+    type Output = bool;
+    fn generate(self) -> bool { self }
+}
+```
+
+## 为错误场景实现特化
+
+基于特化的思想，我们需要定义一个 trait 来表示 builder 不同阶段的公共行为：
+
+```rust
+trait Builder {
+    type Result;
+
+    fn build(self) -> Self::Result;
+}
+```
+
+这个 `Builder` 要求一个 `Result` 类型来制定 builder 构造出来的对象的类型，并且需要实现一个 `build` 方法来完成对 `Result` 的构造。
+
+然后定义一个错误场景所用到的 `Result` 类型，比如名为 `IncompletePerson`。接下来为通用场景实现 `Builder` trait：
+
+```rust
+impl<T> Builder for PersonBuilder<T> {
+    default type Result = IncompletePerson;
+
+    default fn build(self) -> Self::Result {
+        panic!("not all fields are set")
+    }
+}
+```
+
+这里我们不真实构造 `IncompletePerson`，而是直接将程序 panic 掉，不过大家也可以选择自己喜欢的处理方式。
+
+然后实现为完整初始化阶段实现特化：
+
+```rust
+impl Builder for PersonBuilder<B111> {
+    type Result = Person;
+
+    fn build(self) -> Self::Result {
+        Person {
+            name: self.name.unwrap(),
+            gender: self.gender.unwrap(),
+            birth_date: self.birth_date.unwrap(),
+        }
+    }
+}
+```
+
+这个与之前的代码是一致的，只不过我们 override 了通用版本的 `Result` 类型。
+
+至此，我们就完成了这个具有静态检查能力的 builder。当使用方没有指定所有必选字段时，他获得的结果则是一个 `IncompletePerson` 类型，这样通过名称就可以得知构造代码不完整了。当然，本文还只是通过手写完成所有的代码，这部分代码完全也可以封装成一个过程宏，从而变得更通用。
