@@ -1,14 +1,17 @@
-import { Suspense } from "react";
+import { StrictMode, Suspense } from "react";
 import { prerenderToNodeStream } from "react-dom/static";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import routes from "./routes";
+export { default as postIndex } from "virtual:postIndex";
 
 function App({ router }: { router: ReturnType<typeof createMemoryRouter> }) {
   return (
-    <Suspense>
-      <RouterProvider router={router} />
-    </Suspense>
+    <StrictMode>
+      <Suspense>
+        <RouterProvider router={router} />
+      </Suspense>
+    </StrictMode>
   );
 }
 

@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, Suspense } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -11,7 +11,9 @@ function App() {
   return (
     <StrictMode>
       <ThemeClientInitializer />
-      <RouterProvider router={router} />
+      <Suspense>
+        <RouterProvider router={router} />
+      </Suspense>
     </StrictMode>
   );
 }
