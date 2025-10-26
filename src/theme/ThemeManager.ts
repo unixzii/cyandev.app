@@ -1,5 +1,3 @@
-"use client";
-
 import type { Theme } from "./types";
 
 interface ThemeManager {

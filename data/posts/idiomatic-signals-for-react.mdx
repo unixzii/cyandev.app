@@ -36,7 +36,7 @@ The component has an internal state `count`, every second it will be increased. 
 
 So what makes the magic happen? The transformed code reveals everything:
 
-```jsx{9}
+```jsx {10}
 const _tmpl$ = _$template(`<div>Count: </div>`, 2);
 
 function Counter() {
@@ -121,7 +121,7 @@ The component doesn’t have any props, but relies on an internal state. The sta
 
 How can our component fetch its state? It performs an effect. The effect, which can be imagined as a black box, helps you store something in the execution context and returns the current value back. The process written in algebraic-effect fashion is like:
 
-```jsx{1,12,21}
+```jsx {2,13,22}
 function Counter() {
 	const [count] = perform State(0);
   // `count` is based on the execution context.
@@ -153,7 +153,7 @@ function render() {
 
 Actually, every built-in hook in React works like that. Although there is no algebraic effect feature in JavaScript, hooks can interact with the execution context with some global variables:
 
-```jsx{3,9}
+```jsx {4,10}
 let currentDispatcher;
 
 function useState() {
@@ -202,7 +202,7 @@ Sadly, `useSignal` does not return the value itself. Instead, it returns a “bo
 
 Beyond the theories, there are indeed something Preact signal has screwed up. To collect the signal dependencies, the library has to monkey-patch React’s dispatcher object. It observes when React is going to invoke the render function of a component:
 
-```jsx{6}
+```jsx {7}
 Object.defineProperty(ReactInternals.ReactCurrentDispatcher, "current", {
   // ...
   set(nextDispatcher: ReactDispatcher) {
@@ -342,7 +342,7 @@ export const todo$: TodoItemsSignal = signal([
 
 As we discussed earlier, the signal can be used with vanilla JavaScript. You can attach an observer to the signal to react to each change on it. In React, we can use the `useSignal` hook we just implemented:
 
-```tsx{5}
+```tsx {6}
 export type TodoListProps = {
   list$: ObservableValue<TodoItem[]>;
 };

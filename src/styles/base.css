@@ -21,6 +21,13 @@
         background-color 0.3s linear 0s,
         border-color 0.3s linear 0s !important;
     }
+    
+    .theme-switcher-thumb {
+        transition:
+          background-color 0.3s linear 0s,
+          color 0.3s linear 0s,
+          left 0.2s ease-out 0s !important;
+    }
 
     h1,
     h2,

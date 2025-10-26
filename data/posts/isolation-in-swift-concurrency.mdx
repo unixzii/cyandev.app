@@ -64,7 +64,7 @@ actor Bank {
 
 如上面所说，每个 actor 都提供了一套隔离的运行环境，也就是说每个 actor 实例都是一个隔离。隔离的对象之间不能直接进行互相访问，例如下面的代码：
 
-```swift{4,8}
+```swift {5,9}
 func wireTransfer(_ amount: Int, from account: String, to anotherAccount: String, at anotherBank: Bank) {
     guard let balance = balances[account], balance >= amount else {
         return
@@ -85,7 +85,7 @@ Actor-isolated property 'balances' can not be referenced on a nonisolated actor 
 
 我们无法操作另一个 `Bank` 实例的状态，即使我们是同一个类。这是因为不同的 `Bank` 实例属于不同的隔离，`self` 的 `wireTransfer(_:from:to:at:)` 方法在执行过程中存在于 `self` 的隔离，而访问 `anotherBank` 内部状态需要在 `anotherBank` 的隔离下。那我们要操作 `anotherBank` 该怎么办呢？答案是**发消息**！当我们尝试调用另一个隔离环境的方法时，这个调用就会隐式地变成一个消息，发消息的过程是异步的，因此我们需要这样写：
 
-```swift{0,5}
+```swift {1,6}
 func wireTransfer(_ amount: Int, from account: String, to anotherAccount: String, at anotherBank: Bank) async {
     guard let balance = balances[account], balance >= amount else {
         return
@@ -125,7 +125,7 @@ class Bank {
 
 与此同时，在 `Bank` 对象的方法中对其他 `Bank` 对象的操作也不需要消息传递了，因为他们都在一个隔离中：
 
-```swift{0,5}
+```swift {1,6}
 func wireTransfer(_ amount: Int, from account: String, to anotherAccount: String, at anotherBank: Bank) {
     guard let balance = balances[account], balance >= amount else {
         return
@@ -222,7 +222,7 @@ Global actor 'BankActor'-isolated property 'balances' can not be referenced from
 
 在今年发布的 Swift 6.2 中还新增了一个 **Global-actor isolated conformances** ([SE-0470](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0470-isolated-conformances.md)) 的特性，它允许我们在指定隔离环境下实现某个 protocol。例如上面的例子，`Auditable` 是非隔离协议，但我们可以让 `Bank` 只在 `BankActor` 环境中实现它：
 
-```swift{0}
+```swift {1}
 extension Bank: @BankActor Auditable {
 
    func audit() -> Bool {

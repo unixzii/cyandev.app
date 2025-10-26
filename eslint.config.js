@@ -1,29 +1,18 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import stylistic from "@stylistic/eslint-plugin";
+// @ts-check
 
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-});
+import eslint from "@eslint/js";
+import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
 
-const eslintConfig = [
+export default defineConfig(
+  eslint.configs.recommended,
+  tseslint.configs.recommended,
   {
-    plugins: {
-      "@stylistic": stylistic,
-    },
     rules: {
-      "@stylistic/indent": ["error", 2],
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-        },
-      ],
-      "comma-dangle": ["error", "only-multiline"],
+      "consistent-return": "error",
+      indent: ["error", 2],
+      semi: ["error", "always"],
+      "space-unary-ops": "error",
     },
   },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-];
-
-export default eslintConfig;
+);

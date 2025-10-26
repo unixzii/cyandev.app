@@ -1,6 +1,6 @@
 @theme {
-  --font-sans: "Inter";
-  --font-mono: "Geist Mono";
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "Geist Mono", monospace;
 
   --color-background: var(--color-neutral-50);
   --color-background-secondary: var(--color-neutral-100);
