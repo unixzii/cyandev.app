@@ -15,25 +15,14 @@
     background-color: --alpha(var(--color-primary) / 15%);
   }
 
-  .theme-transition:root {
-    * {
-      transition:
-        background-color 0.3s linear 0s,
-        border-color 0.3s linear 0s !important;
-    }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
 
-    h1,
-    h2,
-    h3,
-    h4,
-    p,
-    span,
-    strong,
-    a,
-    code,
-    svg {
-      transition: color 0.3s linear 0s !important;
-    }
+  ::view-transition-new(root) {
+    /* Keep the old snapshot and fade in the new one. */
+    opacity: 0;
   }
 }
 

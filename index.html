@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <title>Cyandev</title>
+        <script>
+        (() => {
+          var t = localStorage.getItem("app_theme");
+          if (t !== "system" && t !== "light" && t !== "dark") {
+            t = "system";
+          }
+          document.documentElement.dataset.theme = t;
+        })();
+        </script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+        <link href="/src/style.css" rel="stylesheet" />
+        <link rel="canonical" href="https://cyandev.app">
+        <link rel="alternate" type="application/rss+xml" href="https://cyandev.app/rss">
+        <link rel="icon" href="/icon.png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <meta property="og:image" content="https://cyandev.app/twitter-cards/common.png">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@unixzii">
+        <meta name="twitter:creator" content="@unixzii">
+        <meta name="twitter:image" content="https://cyandev.app/twitter-cards/common.png">
+        <!--META-SLOT-->
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>

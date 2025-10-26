@@ -1,5 +1,3 @@
-"use client";
-
 import type { Theme } from "./types";
 
 interface ThemeManager {
@@ -10,32 +8,20 @@ interface ThemeManager {
 }
 
 const LOCAL_STORAGE_KEY = "app_theme";
-const THEME_TRANSITION_CLASS = "theme-transition";
 
 const LIGHT_THEME_COLOR = "#fafafa";
 const DARK_THEME_COLOR = "#171717";
 
 const listeners = new Set<() => void>();
 let currentTheme: Theme = "system";
-let clearTransitionTimer: number | null = null;
 
 let lightThemeColorMeta: HTMLMetaElement | null = null;
 let darkThemeColorMeta: HTMLMetaElement | null = null;
 
-function applyTheme(theme: Theme, withAnimation: boolean) {
+function applyTheme(theme: Theme) {
   currentTheme = theme;
 
   const root = document.documentElement;
-  if (withAnimation) {
-    root.classList.add(THEME_TRANSITION_CLASS);
-    if (clearTransitionTimer) {
-      window.clearTimeout(clearTransitionTimer);
-    }
-    clearTransitionTimer = window.setTimeout(() => {
-      root.classList.remove(THEME_TRANSITION_CLASS);
-      clearTransitionTimer = null;
-    }, 300);
-  }
   root.dataset["theme"] = theme;
 
   if (!lightThemeColorMeta || !darkThemeColorMeta) {
@@ -67,7 +53,7 @@ const themeManager: ThemeManager = {
       persistentTheme === "light" ||
       persistentTheme === "dark"
     ) {
-      applyTheme(persistentTheme, false);
+      applyTheme(persistentTheme);
     }
   },
   getTheme() {
@@ -75,7 +61,25 @@ const themeManager: ThemeManager = {
   },
   setTheme(theme: Theme) {
     localStorage.setItem(LOCAL_STORAGE_KEY, theme);
-    applyTheme(theme, true);
+
+    if (!("startViewTransition" in document)) {
+      applyTheme(theme);
+      return;
+    }
+
+    const transition = document.startViewTransition(() => {
+      applyTheme(theme);
+    });
+    transition.ready.then(() => {
+      document.documentElement.animate(
+        { opacity: 1 },
+        {
+          duration: 200,
+          pseudoElement: "::view-transition-new(root)",
+          fill: "both",
+        },
+      );
+    });
   },
   registerListener(listener) {
     listeners.add(listener);
