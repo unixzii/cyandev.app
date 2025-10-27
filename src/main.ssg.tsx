@@ -1,21 +1,24 @@
-import { StrictMode, Suspense } from "react";
+import { Suspense } from "react";
 import { prerenderToNodeStream } from "react-dom/static";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import routes from "./routes";
-export { default as postIndex } from "virtual:postIndex";
+import postIndex from "virtual:postIndex";
 
 function App({ router }: { router: ReturnType<typeof createMemoryRouter> }) {
   return (
-    <StrictMode>
-      <Suspense>
-        <RouterProvider router={router} />
-      </Suspense>
-    </StrictMode>
+    <Suspense>
+      <RouterProvider router={router} />
+    </Suspense>
   );
 }
 
-export async function render(path: string) {
+export interface RenderedPage {
+  path: string;
+  contents: string;
+}
+
+async function renderPage(path: string) {
   const router = createMemoryRouter(routes);
   await router.navigate(path);
 
@@ -30,5 +33,16 @@ export async function render(path: string) {
     prelude.on("end", () => resolve(data));
     prelude.on("error", reject);
   });
-  return contents;
+  return { path, contents };
+}
+
+export async function render() {
+  const renderedPages: RenderedPage[] = [];
+
+  renderedPages.push(await renderPage("/"));
+  for (const post of postIndex) {
+    renderedPages.push(await renderPage(`/post/${post.slug}`));
+  }
+
+  return renderedPages;
 }

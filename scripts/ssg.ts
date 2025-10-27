@@ -2,27 +2,40 @@ import path from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import { ensureDir } from "fs-extra";
 
+import type * as ssgModule from "../src/main.ssg";
+
 const dirname = import.meta.dirname;
 
-import("../dist/server/main.ssg.js" as any).then(async (entry) => {
-  const template = readFileSync(
-    path.resolve(dirname, "../dist/index.html"),
-  ).toString();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import("../dist/server/main.ssg.js" as any).then(
+  async (entry: typeof ssgModule) => {
+    const { render } = entry;
 
-  async function render(routePath: string, dest: string) {
-    const contents = await entry.render(routePath);
-    const htmlString = template.replace(
-      '<div id="root"></div>',
-      '<div id="root">' + contents + "</div>",
-    );
-    const resolvedDestPath = path.resolve(dirname, "../dist", dest);
-    await ensureDir(path.dirname(resolvedDestPath));
-    writeFileSync(resolvedDestPath, htmlString);
-  }
+    const htmlTemplate = readFileSync(
+      path.resolve(dirname, "../dist/index.html"),
+    ).toString();
 
-  await render("/", "index.html");
-  for (const post of entry.postIndex) {
-    const { slug } = post;
-    await render(`/post/${slug}`, `post/${slug}.html`);
-  }
-});
+    async function writeRenderedPage(page: ssgModule.RenderedPage) {
+      const { path: routePath, contents } = page;
+      const htmlString = htmlTemplate.replace(
+        '<div id="root"></div>',
+        '<div id="root">' + contents + "</div>",
+      );
+
+      const cleanedRoutePath =
+        routePath === "/" ? "index.html" : `${routePath.slice(1)}.html`;
+      const resolvedDestPath = path.resolve(
+        dirname,
+        "../dist",
+        cleanedRoutePath,
+      );
+      await ensureDir(path.dirname(resolvedDestPath));
+      writeFileSync(resolvedDestPath, htmlString);
+    }
+
+    const renderedPages = await render();
+    for (const page of renderedPages) {
+      await writeRenderedPage(page);
+    }
+  },
+);

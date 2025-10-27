@@ -1,7 +1,7 @@
 import { useRouteError } from "react-router";
 
 import NotFound from "./not-found";
-import { PostNotFoundError } from "@/errors";
+import { PostNotFoundError } from "@/post-loader";
 
 export default function ErrorBoundary() {
   const error = useRouteError() as Error;
