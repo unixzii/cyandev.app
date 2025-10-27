@@ -1,13 +1,14 @@
-import { use } from "react";
-import { useParams } from "react-router";
-
 import { Reader } from "@/components/reader";
-import { loadPost } from "@/post-loader";
 import { useMetadataProvider } from "@/metadata";
+import type posts from "virtual:posts";
 
-export default function PostPage() {
-  const { slug } = useParams() as { slug: string };
-  const postModule = use(loadPost(slug));
+type PostModule = (typeof posts)[string] extends Promise<infer T> ? T : never;
+
+export default function PostPage(props: {
+  slug: string;
+  postModule: PostModule;
+}) {
+  const { slug, postModule } = props;
 
   const { metadata, default: MDXContent } = postModule;
   const { title, description, date } = metadata;
