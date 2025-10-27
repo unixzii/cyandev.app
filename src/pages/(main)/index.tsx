@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 
+import { Logo } from "@/components/Logo";
 import postIndex from "virtual:postIndex";
 
 function PostItem({
@@ -32,8 +33,10 @@ export default function RootPage() {
   });
 
   return (
-    <main>
-      <h1 className="page-title font-mono">cyandev_</h1>
+    <main className="mt-36">
+      <h1 className="page-title font-mono">
+        <Logo />
+      </h1>
       <p className="page-subtitle">
         A random guy on the internet, a software engineer.
       </p>

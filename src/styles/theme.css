@@ -15,7 +15,6 @@
   --color-code-highlighted-line: --alpha(var(--color-neutral-200) / 75%);
 
   --animate-glitch-blink: glitch-blink 2s linear both;
-
   @keyframes glitch-blink {
     0%,
     30%,
@@ -35,6 +34,21 @@
     100% {
       opacity: 1;
       text-shadow: 0px 0px 50px rgb(255 255 255 / 80%);
+    }
+  }
+  
+  --animate-cursor-blink: cursor-blink 1.2s infinite;
+  @keyframes cursor-blink {
+    0%,
+    45% {
+      opacity: 1;
+    }
+    60%,
+    98% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
     }
   }
 }

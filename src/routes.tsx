@@ -1,16 +1,16 @@
 import { lazy } from "react";
 import { type RouteObject } from "react-router";
 
-import RootLayout from "./pages/layout";
+import RootLayout from "./pages/(main)/layout";
+import SubLayout from "./pages/(main)/(sub)/layout";
 import NotFound from "./pages/not-found";
 import ErrorBoundary from "./pages/error";
 
-const RootPage = lazy(() => import("./pages"));
-const PostPage = lazy(() => import("./pages/post/[slug]"));
+const RootPage = lazy(() => import("./pages/(main)"));
+const PostPage = lazy(() => import("./pages/(main)/(sub)/post/[slug]"));
 
 const routes: RouteObject[] = [
   {
-    path: "/",
     Component: RootLayout,
     ErrorBoundary,
     children: [
@@ -19,8 +19,13 @@ const routes: RouteObject[] = [
         Component: RootPage,
       },
       {
-        path: "post/:slug",
-        Component: PostPage,
+        Component: SubLayout,
+        children: [
+          {
+            path: "post/:slug",
+            Component: PostPage,
+          },
+        ],
       },
     ],
   },

@@ -5,11 +5,11 @@ import { Footer } from "@/components/Footer";
 
 export default function RootLayout() {
   return (
-    <div>
-      <ReadableArea className="mt-30 mb-12">
+    <>
+      <ReadableArea className="mb-12">
         <Outlet />
       </ReadableArea>
       <Footer />
-    </div>
+    </>
   );
 }
