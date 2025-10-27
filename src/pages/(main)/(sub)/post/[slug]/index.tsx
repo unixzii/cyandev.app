@@ -3,14 +3,21 @@ import { useParams } from "react-router";
 
 import { Reader } from "@/components/reader";
 import { loadPost } from "@/post-loader";
+import { useMetadataProvider } from "@/metadata";
 
 export default function PostPage() {
   const { slug } = useParams() as { slug: string };
   const postModule = use(loadPost(slug));
 
   const { metadata, default: MDXContent } = postModule;
-  const { title, date } = metadata;
+  const { title, description, date } = metadata;
   const parsedDate = new Date(date);
+
+  useMetadataProvider({
+    title: `${title} | Cyandev`,
+    description,
+    url: `https://cyandev.app/post/${slug}`,
+  });
 
   return (
     <main>

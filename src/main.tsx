@@ -4,6 +4,7 @@ import { createBrowserRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 
 import routes from "./routes";
+import { MetadataContext } from "./metadata";
 import { ThemeClientInitializer } from "@/theme";
 
 function App() {
@@ -12,7 +13,16 @@ function App() {
     <>
       <ThemeClientInitializer />
       <Suspense>
-        <RouterProvider router={router} />
+        <MetadataContext
+          router={router}
+          initialMetadata={{
+            title: "Cyandev",
+            description: "Cyandev's personal blog",
+            url: `https://cyandev.app`,
+          }}
+        >
+          <RouterProvider router={router} />
+        </MetadataContext>
       </Suspense>
     </>
   );
