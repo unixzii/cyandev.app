@@ -23,7 +23,7 @@ function findOrInsertMetaElement(name?: string, property?: string) {
   return element as HTMLMetaElement;
 }
 
-export function applyMetadata(metadata: Metadata) {
+export function renderMetadata(metadata: Metadata) {
   const { title, description, url } = metadata;
 
   let titleElement = document.head.querySelector("title");
@@ -47,4 +47,25 @@ export function applyMetadata(metadata: Metadata) {
 
   const ogUrlElement = findOrInsertMetaElement(undefined, "og:url");
   ogUrlElement.setAttribute("content", url || "");
+}
+
+export function renderMetadataToString(metadata: Metadata) {
+  const { title, description, url } = metadata;
+  let htmlString = "";
+
+  if (title) {
+    htmlString += `<title>${title}</title>`;
+  }
+
+  if (description) {
+    htmlString += `<meta name="description" content="${description}">`;
+    htmlString += `<meta property="og:description" content="${description}">`;
+    htmlString += `<meta name="twitter:description" content="${description}">`;
+  }
+
+  if (url) {
+    htmlString += `<meta property="og:url" content="${url}">`;
+  }
+
+  return htmlString;
 }

@@ -1,24 +1,14 @@
 import { Reader } from "@/components/reader";
-import { useMetadataProvider } from "@/metadata";
 import type posts from "virtual:posts";
 
 type PostModule = (typeof posts)[string] extends Promise<infer T> ? T : never;
 
-export default function PostPage(props: {
-  slug: string;
-  postModule: PostModule;
-}) {
-  const { slug, postModule } = props;
+export default function PostPage(props: { postModule: PostModule }) {
+  const { postModule } = props;
 
   const { metadata, default: MDXContent } = postModule;
-  const { title, description, date } = metadata;
+  const { title, date } = metadata;
   const parsedDate = new Date(date);
-
-  useMetadataProvider({
-    title: `${title} | Cyandev`,
-    description,
-    url: `https://cyandev.app/post/${slug}`,
-  });
 
   return (
     <main>

@@ -9,12 +9,12 @@ import { loadPost } from "./post-loader";
 import postIndex from "virtual:postIndex";
 
 const RootPage = lazy(() => import("./pages/(main)"));
-const PostPage = lazy(() => import("./pages/(main)/(sub)/post/[slug]"));
 
+const PostPage = lazy(() => import("./pages/(main)/(sub)/post/[slug]"));
 function wrapPostPage(slug: string) {
   function WrappedPostPage() {
     const postModule = use(loadPost(slug));
-    return <PostPage slug={slug} postModule={postModule} />;
+    return <PostPage postModule={postModule} />;
   }
   return WrappedPostPage;
 }
@@ -33,6 +33,11 @@ const routes: RouteObject[] = [
         children: postIndex.map((post) => ({
           path: `post/${post.slug}`,
           Component: wrapPostPage(post.slug!),
+          metadata: {
+            title: post.title,
+            description: post.description,
+            url: `https://cyandev.app/post/${post.slug}`,
+          },
         })),
       },
     ],

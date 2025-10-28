@@ -16,11 +16,13 @@ import("../dist/server/main.ssg.js" as any).then(
     ).toString();
 
     async function writeRenderedPage(page: ssgModule.RenderedPage) {
-      const { path: routePath, contents } = page;
-      const htmlString = htmlTemplate.replace(
-        '<div id="root"></div>',
-        '<div id="root">' + contents + "</div>",
-      );
+      const { path: routePath, contents, metadata } = page;
+      const htmlString = htmlTemplate
+        .replace("<!--META-SLOT-->", metadata)
+        .replace(
+          '<div id="root"></div>',
+          '<div id="root">' + contents + "</div>",
+        );
 
       const cleanedRoutePath =
         routePath === "/" ? "index.html" : `${routePath.slice(1)}.html`;

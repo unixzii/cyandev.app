@@ -1,37 +1,15 @@
-import { StrictMode, Suspense } from "react";
+import { StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { createBrowserRouter } from "react-router";
-import { RouterProvider } from "react-router/dom";
 
+import { App } from "./App";
 import routes from "./routes";
-import { MetadataContext } from "./metadata";
-import { ThemeClientInitializer } from "@/theme";
-
-function App() {
-  const router = createBrowserRouter(routes);
-  return (
-    <>
-      <ThemeClientInitializer />
-      <Suspense>
-        <MetadataContext
-          router={router}
-          initialMetadata={{
-            title: "Cyandev",
-            description: "Cyandev's personal blog",
-            url: `https://cyandev.app`,
-          }}
-        >
-          <RouterProvider router={router} />
-        </MetadataContext>
-      </Suspense>
-    </>
-  );
-}
 
 const rootElement = document.getElementById("root")!;
+const router = createBrowserRouter(routes);
 hydrateRoot(
   rootElement,
   <StrictMode>
-    <App />
+    <App router={router} />
   </StrictMode>,
 );
