@@ -1,6 +1,3 @@
-import type { FC } from "react";
-import { format as formatDate } from "date-fns";
-import { ReadableArea } from "./ReadableArea";
 import { type IconType, Icon } from "@/components/Icon";
 import me from "@/../data/me.json";
 import { ThemeSwitcher } from "./ThemeSwitcher";
@@ -42,18 +39,16 @@ function SocialLinks() {
   );
 }
 
-export const Footer: FC = () => {
+export const Footer = () => {
+  const yearString = new Date().getFullYear();
+
   return (
-    <footer className="pb-12 md:pb-16">
-      <ReadableArea className="flex items-start justify-between">
-        <div>
-          <p className="mb-2 text-secondary text-sm">
-            © {formatDate(Date.now(), "yyyy")} Cyandev
-          </p>
-          <SocialLinks />
-        </div>
-        <ThemeSwitcher />
-      </ReadableArea>
+    <footer className="pb-12 md:pb-16 flex items-start justify-between">
+      <div>
+        <p className="mb-2 text-secondary text-sm">© {yearString} Cyandev</p>
+        <SocialLinks />
+      </div>
+      <ThemeSwitcher />
     </footer>
   );
 };

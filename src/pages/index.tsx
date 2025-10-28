@@ -33,7 +33,7 @@ export default function RootPage() {
   });
 
   return (
-    <main className="mt-36">
+    <main>
       <h1 className="page-title font-mono">
         <Logo />
       </h1>
