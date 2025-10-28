@@ -10,7 +10,7 @@ function PostItem({
   post: PostMetadata;
   formatter: Intl.DateTimeFormat;
 }) {
-  const date = new Date(post.date);
+  const date = new Date(post.date!);
 
   return (
     <li className="flex flex-col gap-1 mb-8">
@@ -38,7 +38,14 @@ export default function RootPage() {
         <Logo />
       </h1>
       <p className="page-subtitle">
-        A random guy on the internet, a software engineer.
+        A random guy on the internet, a software engineer. See{" "}
+        <Link
+          className="text-primary font-medium underline decoration-transparent hover:decoration-primary transition-colors duration-200"
+          to="/page/about"
+        >
+          here
+        </Link>{" "}
+        to learn about me.
       </p>
       <div className="mt-16">
         <ul>

@@ -1,2 +1,2 @@
 /// <reference types="vite/client" />
-/// <reference types="../types/post" />
+/// <reference types="../types/content-provider" />

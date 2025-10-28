@@ -7,7 +7,6 @@
 
   .page-subtitle {
     font-size: var(--text-base);
-    line-height: 1;
     color: var(--color-secondary);
     margin-top: calc(var(--spacing) * 6);
   }

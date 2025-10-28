@@ -1,27 +1,25 @@
 import { Reader } from "@/components/reader";
-import type posts from "virtual:posts";
-
-type PostModule = (typeof posts)[string] extends Promise<infer T> ? T : never;
 
 export default function PostPage(props: { postModule: PostModule }) {
   const { postModule } = props;
-
-  const { metadata, default: MDXContent } = postModule;
+  const { metadata, default: contentComponent } = postModule;
   const { title, date } = metadata;
-  const parsedDate = new Date(date);
+  const parsedDate = date ? new Date(date) : undefined;
 
   return (
     <main>
       <h1 className="page-title">{title}</h1>
-      <p className="page-subtitle">
-        <time dateTime={parsedDate.toISOString()}>
-          {new Intl.DateTimeFormat("en-US", {
-            dateStyle: "long",
-          }).format(parsedDate)}
-        </time>
-      </p>
+      {parsedDate ? (
+        <p className="page-subtitle">
+          <time dateTime={parsedDate.toISOString()}>
+            {new Intl.DateTimeFormat("en-US", {
+              dateStyle: "long",
+            }).format(parsedDate)}
+          </time>
+        </p>
+      ) : null}
       <article className="mt-16 md-reader">
-        <Reader contentComponent={MDXContent} />
+        <Reader contentComponent={contentComponent} />
       </article>
     </main>
   );

@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import mdx from "@mdx-js/rollup";
 import rehypePrettyCode, { Options } from "rehype-pretty-code";
 
-import postProvider from "./plugins/post-provider";
+import { postProvider, pageProvider } from "./plugins/content-provider";
 
 export default defineConfig({
   resolve: {
@@ -30,5 +30,6 @@ export default defineConfig({
       ],
     }),
     postProvider(path.resolve(import.meta.dirname, "data/posts")),
+    pageProvider(path.resolve(import.meta.dirname, "data/pages")),
   ],
 });
