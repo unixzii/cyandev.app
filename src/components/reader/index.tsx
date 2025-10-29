@@ -8,6 +8,7 @@ export interface ReaderProps {
   contentComponent: FunctionComponent<{
     components: MDXComponents;
   }>;
+  components?: MDXComponents;
 }
 
 const overrideComponents: MDXComponents = {
@@ -30,5 +31,9 @@ const overrideComponents: MDXComponents = {
 
 export function Reader(props: ReaderProps) {
   const ContentComponent = props.contentComponent;
-  return <ContentComponent components={overrideComponents} />;
+  const components = {
+    ...overrideComponents,
+    ...props.components,
+  };
+  return <ContentComponent components={components} />;
 }

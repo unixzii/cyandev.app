@@ -8,7 +8,7 @@
     "lint": "eslint src/",
     "build": "pnpm build:client && pnpm build:ssg",
     "build:client": "vite build --outDir dist",
-    "build:ssg": "vite build --ssr src/main.ssg.tsx --outDir dist/server && tsx scripts/ssg.ts"
+    "build:ssg": "vite build --ssr src/main.ssg.tsx --outDir dist/server && tsx scripts/ssg.ts && tsx scripts/generate-rss.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
@@ -24,6 +24,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "eslint": "^9.38.0",
+    "feed": "^5.1.0",
     "fs-extra": "^11.3.2",
     "react": "^19.2.0",
     "react-blurhash": "^0.3.0",
