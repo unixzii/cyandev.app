@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "lint": "eslint src/",
-    "build": "pnpm build:client && pnpm build:ssg",
+    "build": "pnpm build:client && pnpm build:ssg && pnpm build:vercel-config",
     "build:client": "vite build --outDir dist",
-    "build:ssg": "vite build --ssr src/main.ssg.tsx --outDir dist/server && tsx scripts/ssg.ts && tsx scripts/generate-rss.ts"
+    "build:ssg": "vite build --ssr src/main.ssg.tsx --outDir dist/server && tsx scripts/ssg.ts && tsx scripts/generate-rss.ts",
+    "build:vercel-config": "tsx scripts/generate-vercel-config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
