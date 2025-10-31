@@ -15,13 +15,14 @@
     background-color: --alpha(var(--color-primary) / 15%);
   }
 
-  .theme-transition:root {
-    *:not([data-custom-theme-transition]) {
-      transition:
-        color 0.4s linear 0s,
-        background-color 0.4s linear 0s,
-        border-color 0.4s linear 0s !important;
-    }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  ::view-transition-new(root) {
+    /* Keep the old snapshot and fade in the new one. */
+    opacity: 0;
   }
 }
 

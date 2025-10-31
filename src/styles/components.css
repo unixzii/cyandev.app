@@ -10,12 +10,28 @@
     color: var(--color-secondary);
     margin-top: calc(var(--spacing) * 6);
   }
-  
+
+  .theme-switcher {
+    view-transition-name: theme-switcher;
+  }
+
+  ::view-transition-old(theme-switcher),
+  ::view-transition-new(theme-switcher) {
+    animation: none;
+  }
+
+  ::view-transition-old(theme-switcher) {
+    /**
+     * theme-switcher has a custom transition itself, this is
+     * only for bringing the switcher on top of the root view
+     * transition layers.
+     */
+    opacity: 0;
+  }
+
   .theme-switcher-thumb {
-    transition:
-        background-color 0.4s linear 0s,
-        color 0.4s linear 0s,
-        left 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) 0s;
+    transition: background-color 0.3s,
+                left 0.3s cubic-bezier(0.22, 0.61, 0.36, 1) 0s;
   }
 
   .md-reader {

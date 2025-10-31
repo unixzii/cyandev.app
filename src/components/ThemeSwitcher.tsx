@@ -54,7 +54,7 @@ export function ThemeSwitcher() {
 
   return (
     <div
-      className="relative p-0.5 bg-separator inset-shadow-xs rounded-full"
+      className="theme-switcher relative p-0.5 bg-separator inset-shadow-xs rounded-full"
       aria-label="Theme Switcher"
     >
       <div
@@ -62,7 +62,6 @@ export function ThemeSwitcher() {
         style={{
           left: INDICATOR_OFFSET_MAP[currentTheme],
         }}
-        data-custom-theme-transition
       />
 
       <div className="relative flex z-20">
