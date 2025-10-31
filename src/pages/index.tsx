@@ -38,14 +38,7 @@ export default function RootPage() {
         <Logo />
       </h1>
       <p className="page-subtitle">
-        A random guy on the internet, a software engineer. See{" "}
-        <Link
-          className="text-primary font-medium underline decoration-transparent hover:decoration-primary transition-colors duration-200"
-          to="/page/about"
-        >
-          here
-        </Link>{" "}
-        to learn about me.
+        A random guy on the internet, a software engineer.
       </p>
       <div className="mt-16">
         <ul>

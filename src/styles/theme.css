@@ -8,11 +8,11 @@
   --color-secondary: var(--color-neutral-500);
   --color-tertiary: var(--color-neutral-300);
   --color-separator: --alpha(var(--color-primary) / 8%);
-  --color-backdrop-tint: --alpha(var(--color-background) / 75%);
-  --color-body: var(--color-neutral-600);
   --color-link: var(--color-blue-500);
   --color-link-highlighted: var(--color-blue-700);
   --color-code-highlighted-line: --alpha(var(--color-neutral-200) / 75%);
+  
+  --ease-out-cubic: cubic-bezier(0.22, 0.61, 0.36, 1);
 
   --animate-glitch-blink: glitch-blink 2s linear both;
   @keyframes glitch-blink {
@@ -56,12 +56,10 @@
 @utility dark-theme-colors {
   --color-background: var(--color-neutral-900);
   --color-background-secondary: --alpha(var(--color-neutral-950) / 50%);
-  --color-primary: var(--color-neutral-100);
-  --color-secondary: var(--color-neutral-400);
-  --color-tertiary: var(--color-neutral-600);
+  --color-primary: var(--color-neutral-300);
+  --color-secondary: var(--color-neutral-500);
+  --color-tertiary: var(--color-neutral-700);
   --color-separator: --alpha(var(--color-primary) / 12%);
-  --color-backdrop-tint: --alpha(var(--color-background) / 75%);
-  --color-body: var(--color-neutral-300);
   --color-link: var(--color-blue-400);
   --color-link-highlighted: var(--color-blue-300);
   --color-code-highlighted-line: --alpha(var(--color-neutral-800) / 60%);

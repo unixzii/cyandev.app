@@ -14,7 +14,7 @@ function SocialLink({
   return (
     <li>
       <a
-        className="flex w-8 h-8 items-center justify-center text-secondary hover:text-primary font-light transition-colors duration-200"
+        className="flex w-10 h-10 items-center justify-center hover:text-primary font-light transition-colors duration-200"
         href={href}
         aria-label={title}
       >
@@ -26,7 +26,7 @@ function SocialLink({
 
 function SocialLinks() {
   return (
-    <ul className="flex gap-1 -ml-2">
+    <ul className="flex -ml-3 text-secondary hover:text-tertiary">
       {me.links.map((link) => (
         <SocialLink
           key={link.title}

@@ -62,6 +62,7 @@ export function ThemeSwitcher() {
         style={{
           left: INDICATOR_OFFSET_MAP[currentTheme],
         }}
+        data-custom-theme-transition
       />
 
       <div className="relative flex z-20">
