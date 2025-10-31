@@ -13,7 +13,7 @@ function generatePathMappings(pathSegments: string[]) {
       const slug = path.parse(file).name;
       const routePrefix = pathSegments.join("/");
       const routePath = `${routePrefix}${routePrefix ? "/" : ""}${slug}`;
-      if (routePath === "index") {
+      if (routePath === "index" || routePath === "404") {
         continue;
       }
       pathMappings[`${routePath}.html`] = {

@@ -35,6 +35,8 @@ async function renderReactNode(node: ReactNode) {
 }
 
 async function renderPage(path: string) {
+  console.log(`Rendering ${path}`);
+
   const router = createMemoryRouter(routes);
   await router.navigate(path);
 
@@ -64,7 +66,6 @@ export async function render() {
       } else {
         // Only render leaf routes.
         const path = pathSegments.join("/");
-        console.log(`Rendering ${path}`);
         renderedPages.push(await renderPage(path));
       }
 
@@ -73,6 +74,7 @@ export async function render() {
   }
 
   await walkRoutes(routes, [""]);
+  renderedPages.push(await renderPage("/404"));
 
   return renderedPages;
 }
