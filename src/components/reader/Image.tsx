@@ -34,6 +34,14 @@ function extractMetadata(s: string): Metadata | undefined {
   return { title, size: size as [number, number], blurhash };
 }
 
+function calcScaleFactor(width: number, height: number, maxWidth: number) {
+  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+  const g = gcd(width, height);
+  const baseWidth = width / g;
+  const maxScaleFactor = Math.floor(maxWidth / baseWidth);
+  return maxScaleFactor / g;
+}
+
 export function Image(props: ImageProps) {
   const { src, alt, title } = props;
 
@@ -57,7 +65,7 @@ export function Image(props: ImageProps) {
   }
 
   const [width, height] = metadata.size;
-  const scaleFactor = 720 / width;
+  const scaleFactor = calcScaleFactor(width, height, 720);
   const [scaledWidth, scaledHeight] = [
     width * scaleFactor,
     height * scaleFactor,
