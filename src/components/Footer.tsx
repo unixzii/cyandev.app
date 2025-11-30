@@ -1,4 +1,5 @@
-import { type IconType, Icon } from "@/components/Icon";
+import { type IconType } from "@/components/Icon";
+import { IconLink } from "@/components/IconButton";
 import me from "@/../data/me.json";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 
@@ -13,13 +14,12 @@ function SocialLink({
 }) {
   return (
     <li>
-      <a
-        className="flex w-10 h-10 items-center justify-center hover:text-primary font-light transition-colors duration-200"
+      <IconLink
+        icon={icon as unknown as IconType}
+        customColor
         href={href}
         aria-label={title}
-      >
-        <Icon icon={icon as unknown as IconType} size="18px" />
-      </a>
+      />
     </li>
   );
 }

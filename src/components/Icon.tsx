@@ -7,6 +7,7 @@ import {
   TbSun,
   TbMoon,
   TbDeviceDesktop,
+  TbSend,
 } from "react-icons/tb";
 
 const ICON_MAP = {
@@ -17,6 +18,7 @@ const ICON_MAP = {
   sun: TbSun,
   moon: TbMoon,
   display: TbDeviceDesktop,
+  send: TbSend,
 };
 export type IconType = keyof typeof ICON_MAP;
 

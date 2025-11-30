@@ -4,9 +4,11 @@
 
   --color-background: var(--color-neutral-50);
   --color-background-secondary: var(--color-neutral-100);
+  --color-background-active: #fff;
   --color-primary: var(--color-neutral-800);
   --color-secondary: var(--color-neutral-500);
   --color-tertiary: var(--color-neutral-300);
+  --color-error: var(--color-red-500);
   --color-separator: --alpha(var(--color-primary) / 8%);
   --color-link: var(--color-blue-500);
   --color-link-highlighted: var(--color-blue-700);
@@ -55,10 +57,12 @@
 
 @utility dark-theme-colors {
   --color-background: var(--color-neutral-900);
-  --color-background-secondary: --alpha(var(--color-neutral-950) / 50%);
+  --color-background-secondary: oklch(16.5% 0 0);
+  --color-background-active: #000;
   --color-primary: var(--color-neutral-200);
   --color-secondary: var(--color-neutral-400);
   --color-tertiary: var(--color-neutral-600);
+  --color-error: var(--color-red-400);
   --color-separator: --alpha(var(--color-primary) / 12%);
   --color-link: var(--color-blue-400);
   --color-link-highlighted: var(--color-blue-300);
