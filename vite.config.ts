@@ -11,6 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": "/src",
+      lib: "/lib",
     },
   },
   plugins: [

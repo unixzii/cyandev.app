@@ -13,6 +13,8 @@
 
   .theme-switcher {
     view-transition-name: theme-switcher;
+    
+    @apply winter-board-aware;
   }
 
   ::view-transition-old(theme-switcher),
@@ -150,6 +152,8 @@
     border: 1px solid var(--color-separator);
     border-radius: var(--radius-md);
     overflow-x: scroll;
+    
+    @apply winter-board-aware;
   
     pre {
       background-color: transparent !important;
@@ -187,5 +191,11 @@
         }
       }
     }
+  }
+}
+
+@utility winter-board-aware {
+  .winter-board-enabled & {
+    backdrop-filter: blur(4px);
   }
 }

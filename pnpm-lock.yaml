@@ -38,6 +38,9 @@ devDependencies:
   blurhash:
     specifier: ^2.0.5
     version: 2.0.5
+  '@webgpu/types':
+    specifier: ^0.1.67
+    version: 0.1.67
   clsx:
     specifier: ^2.1.1
     version: 2.1.1
@@ -1605,6 +1608,10 @@ packages:
       vite: 7.1.12(@types/node@24.9.1)(tsx@4.20.6)
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /@webgpu/types@0.1.67:
+    resolution: {integrity: sha512-uk53+2ECGUkWoDFez/hymwpRfdgdIn6y1ref70fEecGMe5607f4sozNFgBk0oxlr7j2CRGWBEc3IBYMmFdGGTQ==}
     dev: true
 
   /acorn-jsx@5.3.2(acorn@8.15.0):
