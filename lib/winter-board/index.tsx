@@ -5,18 +5,8 @@ import {
   useState,
   useRef,
 } from "react";
-import { Renderer } from "./renderer";
-
-export async function acquireGPUDevice() {
-  if (!navigator.gpu) {
-    return undefined;
-  }
-
-  const adapter = await navigator.gpu.requestAdapter({
-    featureLevel: "compatibility",
-  });
-  return await adapter?.requestDevice();
-}
+import type { WorkerRemoteMessage, WorkerMessage } from "./worker/messages";
+import RenderWorker from "./worker?worker";
 
 interface WinterBoardProps {
   className?: string;
@@ -25,53 +15,73 @@ interface WinterBoardProps {
 
 export function WinterBoard(props: WinterBoardProps) {
   const { className, style } = props;
-  const [device, setDevice] = useState<GPUDevice | undefined>();
+  const [readyWorker, setReadyWorker] = useState<Worker | undefined>();
 
   useEffect(() => {
-    acquireGPUDevice().then((device) => {
-      setDevice(device);
+    const worker = new RenderWorker();
+    worker.addEventListener("message", (event) => {
+      const msg = event.data as WorkerRemoteMessage;
+      if (msg.type === "ready") {
+        setReadyWorker(worker);
+      }
     });
-  }, [setDevice]);
 
-  if (!device) {
-    return null;
+    return () => {
+      worker.terminate();
+    };
+  }, [setReadyWorker]);
+
+  if (readyWorker) {
+    return (
+      <WinterBoardCanvas
+        className={className}
+        style={style}
+        worker={readyWorker}
+      />
+    );
   }
 
-  return (
-    <WinterBoardCanvas className={className} style={style} device={device} />
-  );
+  return null;
 }
 
-function WinterBoardCanvas(props: WinterBoardProps & { device: GPUDevice }) {
-  const { className, style, device } = props;
-  const ref = useRef<HTMLCanvasElement>(null);
+function WinterBoardCanvas(props: WinterBoardProps & { worker: Worker }) {
+  const { className, style, worker } = props;
+  const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!ref.current) return () => {};
 
-    const canvas = ref.current;
-    const context = canvas.getContext("webgpu");
-    if (!context) {
-      return () => {};
-    }
+    const canvas = document.createElement("canvas");
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
 
-    const renderer = new Renderer(context, device);
-    renderer.start();
+    const offscreenCanvas = canvas.transferControlToOffscreen();
+    worker.postMessage(
+      { type: "attach", canvas: offscreenCanvas } satisfies WorkerMessage,
+      [offscreenCanvas],
+    );
+
+    ref.current.appendChild(canvas);
 
     const resizeObserver = new ResizeObserver(() => {
       // FIXME: our renderer is DPI-dependent currently.
       const scaleFactor = 2; /* window.devicePixelRatio */
-      canvas.width = canvas.clientWidth * scaleFactor;
-      canvas.height = canvas.clientHeight * scaleFactor;
-      renderer.resize();
+      const width = canvas.clientWidth * scaleFactor;
+      const height = canvas.clientHeight * scaleFactor;
+      worker.postMessage({
+        type: "resize",
+        width,
+        height,
+      } satisfies WorkerMessage);
     });
     resizeObserver.observe(canvas);
 
     return () => {
       resizeObserver.disconnect();
-      renderer.stop();
+      canvas.remove();
+      worker.postMessage({ type: "detach" } satisfies WorkerMessage);
     };
-  }, [ref, device]);
+  }, [ref, worker]);
 
-  return <canvas ref={ref} className={className} style={style} />;
+  return <div ref={ref} className={className} style={style} />;
 }
