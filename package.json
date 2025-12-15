@@ -9,7 +9,8 @@
     "build": "pnpm build:client && pnpm build:ssg && pnpm build:vercel-config",
     "build:client": "vite build --outDir dist",
     "build:ssg": "vite build --ssr src/main.ssg.tsx --outDir dist/server && tsx scripts/ssg.ts && tsx scripts/generate-rss.ts",
-    "build:vercel-config": "tsx scripts/generate-vercel-config.ts"
+    "build:vercel-config": "tsx scripts/generate-vercel-config.ts",
+    "process-img": "tsx scripts/process-img.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
@@ -22,6 +23,7 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.4",
+    "blurhash": "^2.0.5",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "eslint": "^9.38.0",
@@ -33,6 +35,7 @@
     "react-icons": "^5.5.0",
     "react-router": "^7.9.4",
     "rehype-pretty-code": "^0.14.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.16",
     "tsx": "^4.20.6",
     "typescript": "~5.9.3",
