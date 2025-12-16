@@ -3,6 +3,7 @@ import { RouterProvider } from "react-router/dom";
 
 import { ThemeClientInitializer } from "./theme";
 import { MetadataUpdater } from "./metadata";
+import { IntlProvider } from "./components/IntlProvider";
 
 export const metadata = {
   title: "Cyandev",
@@ -19,7 +20,9 @@ export function App(props: {
       <ThemeClientInitializer />
       <MetadataUpdater router={router} initialMetadata={metadata} />
       <Suspense>
-        <RouterProvider router={router} />
+        <IntlProvider>
+          <RouterProvider router={router} />
+        </IntlProvider>
       </Suspense>
     </>
   );

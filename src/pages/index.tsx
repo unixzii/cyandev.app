@@ -1,15 +1,10 @@
 import { Link } from "react-router";
 
 import { Logo } from "@/components/Logo";
+import { FormattedTime } from "@/components/FormattedTime";
 import postIndex from "virtual:postIndex";
 
-function PostItem({
-  post,
-  formatter,
-}: {
-  post: PostMetadata;
-  formatter: Intl.DateTimeFormat;
-}) {
+function PostItem({ post }: { post: PostMetadata }) {
   const date = new Date(post.date!);
 
   return (
@@ -20,18 +15,12 @@ function PostItem({
       >
         {post.title}
       </Link>
-      <time className="text-sm text-secondary" dateTime={date.toISOString()}>
-        {formatter.format(date)}
-      </time>
+      <FormattedTime className="text-sm text-secondary" dateTime={date} />
     </li>
   );
 }
 
 export default function RootPage() {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    dateStyle: "long",
-  });
-
   return (
     <main>
       <h1 className="page-title font-mono">
@@ -43,7 +32,7 @@ export default function RootPage() {
       <div className="mt-16">
         <ul>
           {postIndex.map((post) => (
-            <PostItem key={post.slug} post={post} formatter={formatter} />
+            <PostItem key={post.slug} post={post} />
           ))}
         </ul>
       </div>
