@@ -38,7 +38,7 @@ function calcScaleFactor(width: number, height: number, maxWidth: number) {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
   const g = gcd(width, height);
   const baseWidth = width / g;
-  const maxScaleFactor = Math.floor(maxWidth / baseWidth);
+  const maxScaleFactor = Math.max(1, Math.floor(maxWidth / baseWidth));
   return maxScaleFactor / g;
 }
 
