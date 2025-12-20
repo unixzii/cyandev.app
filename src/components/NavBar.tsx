@@ -21,10 +21,8 @@ export const NavBar = (props: NavBarProps) => {
     >
       <Link
         className={clsx(
-          "inline-block w-24 font-mono font-bold transition-opacity duration-300",
-          {
-            "opacity-0": hideHome,
-          },
+          "inline-block w-24 font-mono font-bold transition-all duration-500",
+          { "opacity-0 blur-xs": hideHome },
         )}
         to="/"
       >
@@ -32,8 +30,8 @@ export const NavBar = (props: NavBarProps) => {
       </Link>
       <Link
         className={clsx(
-          "text-secondary hover:text-primary transition-all duration-300",
-          { "opacity-0": !hideHome },
+          "text-secondary hover:text-primary transition-all duration-500",
+          { "opacity-0 blur-xs": !hideHome },
         )}
         to="/page/about"
       >
