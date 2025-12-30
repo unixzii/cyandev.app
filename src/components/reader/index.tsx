@@ -1,4 +1,5 @@
 import { type FunctionComponent, type JSX, Children } from "react";
+import { Link } from "react-router";
 import type { MDXComponents } from "mdx/types";
 
 import { FigureCodeBlock, PreCodeBlock } from "./CodeBlock";
@@ -26,6 +27,13 @@ const overrideComponents: MDXComponents = {
       }
     }
     return <p {...props} />;
+  },
+  a(props: JSX.IntrinsicElements["a"]) {
+    const { href, ...restProps } = props;
+    if (href) {
+      return <Link to={href} {...restProps} />;
+    }
+    return <a {...props} />;
   },
 };
 

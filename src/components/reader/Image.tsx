@@ -34,14 +34,6 @@ function extractMetadata(s: string): Metadata | undefined {
   return { title, size: size as [number, number], blurhash };
 }
 
-function calcScaleFactor(width: number, height: number, maxWidth: number) {
-  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-  const g = gcd(width, height);
-  const baseWidth = width / g;
-  const maxScaleFactor = Math.max(1, Math.floor(maxWidth / baseWidth));
-  return maxScaleFactor / g;
-}
-
 export function Image(props: ImageProps) {
   const { src, alt, title } = props;
 
@@ -65,11 +57,6 @@ export function Image(props: ImageProps) {
   }
 
   const [width, height] = metadata.size;
-  const scaleFactor = calcScaleFactor(width, height, 720);
-  const [scaledWidth, scaledHeight] = [
-    width * scaleFactor,
-    height * scaleFactor,
-  ];
 
   return (
     <div className="relative border border-separator rounded-md overflow-hidden">
@@ -81,11 +68,11 @@ export function Image(props: ImageProps) {
           top: 0,
           zIndex: -1,
           width: "100%",
-          aspectRatio: `auto ${width} / ${height}`,
+          aspectRatio: `${width} / ${height}`,
         }}
         hash={metadata.blurhash}
-        width={scaledWidth}
-        height={scaledHeight}
+        width={40}
+        height={30}
       />
       <img
         className={`transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}

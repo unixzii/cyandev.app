@@ -12,10 +12,10 @@ export default function RootLayout() {
   return (
     <>
       <WinterBoard
-        className="fixed left-0 top-0 -z-50 w-full h-full pointer-events-none"
+        className="fixed left-0 top-0 -z-50 w-full h-full invisible dark:visible pointer-events-none"
         style={{
           background:
-            "radial-gradient(circle at 50% 0%, rgb(120 120 132 / 21%), transparent)",
+            "radial-gradient(circle at 50% 0%, rgb(55 55 55 / 21%), transparent)",
         }}
       />
       <ReadableArea>
