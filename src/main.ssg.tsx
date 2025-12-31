@@ -3,7 +3,7 @@ import { prerenderToNodeStream } from "react-dom/static";
 import { type RouteObject, createMemoryRouter } from "react-router";
 
 import { App, metadata as appMetadata } from "./App";
-import { Reader } from "./components/reader";
+import { Reader, settings as readerSettings } from "./components/reader";
 import { collectMetadata, renderMetadataToString } from "./metadata";
 import routes from "./routes";
 import posts from "virtual:posts";
@@ -80,6 +80,8 @@ export async function render() {
 }
 
 export async function renderRSS() {
+  readerSettings.renderingRSS = true;
+
   const renderedItems: RenderedRSSItem[] = [];
 
   for (const postSlug in posts) {

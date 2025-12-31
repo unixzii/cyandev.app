@@ -5,6 +5,10 @@ import type { MDXComponents } from "mdx/types";
 import { FigureCodeBlock, PreCodeBlock } from "./CodeBlock";
 import { Image } from "./Image";
 
+export const settings = {
+  renderingRSS: false,
+};
+
 export interface ReaderProps {
   contentComponent: FunctionComponent<{
     components: MDXComponents;
@@ -30,7 +34,7 @@ const overrideComponents: MDXComponents = {
   },
   a(props: JSX.IntrinsicElements["a"]) {
     const { href, ...restProps } = props;
-    if (href) {
+    if (!settings.renderingRSS && href) {
       return <Link to={href} {...restProps} />;
     }
     return <a {...props} />;
