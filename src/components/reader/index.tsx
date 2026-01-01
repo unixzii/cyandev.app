@@ -4,10 +4,7 @@ import type { MDXComponents } from "mdx/types";
 
 import { FigureCodeBlock, PreCodeBlock } from "./CodeBlock";
 import { Image } from "./Image";
-
-export const settings = {
-  renderingRSS: false,
-};
+import * as env from "@/env";
 
 export interface ReaderProps {
   contentComponent: FunctionComponent<{
@@ -34,7 +31,7 @@ const overrideComponents: MDXComponents = {
   },
   a(props: JSX.IntrinsicElements["a"]) {
     const { href, ...restProps } = props;
-    if (!settings.renderingRSS && href) {
+    if (env.getType() !== "rss-generator" && href) {
       return <Link to={href} {...restProps} />;
     }
     return <a {...props} />;

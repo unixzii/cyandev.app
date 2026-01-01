@@ -3,7 +3,9 @@ import { prerenderToNodeStream } from "react-dom/static";
 import { type RouteObject, createMemoryRouter } from "react-router";
 
 import { App, metadata as appMetadata } from "./App";
-import { Reader, settings as readerSettings } from "./components/reader";
+import * as env from "./env";
+import { getAllServerValues, resetAllServerValues } from "./server-data";
+import { Reader } from "./components/reader";
 import { collectMetadata, renderMetadataToString } from "./metadata";
 import routes from "./routes";
 import posts from "virtual:posts";
@@ -12,6 +14,7 @@ export interface RenderedPage {
   path: string;
   contents: string;
   metadata: string;
+  serverValues: Record<string, unknown>;
 }
 
 export interface RenderedRSSItem {
@@ -37,6 +40,8 @@ async function renderReactNode(node: ReactNode) {
 async function renderPage(path: string) {
   console.log(`Rendering ${path}`);
 
+  resetAllServerValues();
+
   const router = createMemoryRouter(routes);
   await router.navigate(path);
 
@@ -44,11 +49,14 @@ async function renderPage(path: string) {
 
   const contents = await renderReactNode(root);
   const metadata = renderMetadataToString(collectMetadata(router, appMetadata));
+  const serverValues = getAllServerValues();
 
-  return { path, contents, metadata };
+  return { path, contents, metadata, serverValues };
 }
 
 export async function render() {
+  env.init("server");
+
   const renderedPages: RenderedPage[] = [];
 
   async function walkRoutes(routes: RouteObject[], pathSegments: string[]) {
@@ -80,7 +88,7 @@ export async function render() {
 }
 
 export async function renderRSS() {
-  readerSettings.renderingRSS = true;
+  env.init("rss-generator");
 
   const renderedItems: RenderedRSSItem[] = [];
 

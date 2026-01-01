@@ -1,4 +1,5 @@
 import { type IconType, Icon } from "@/components/Icon";
+import { useServerValue } from "@/server-data";
 import me from "@/../data/me.json";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 
@@ -40,7 +41,9 @@ function SocialLinks() {
 }
 
 export const Footer = () => {
-  const yearString = new Date().getFullYear();
+  const yearString = useServerValue("copyright-year", () =>
+    new Date().getFullYear(),
+  );
 
   return (
     <footer className="pb-12 md:pb-16 flex items-start justify-between">

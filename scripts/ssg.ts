@@ -16,9 +16,13 @@ import("../dist/server/main.ssg.js" as any).then(
     ).toString();
 
     async function writeRenderedPage(page: ssgModule.RenderedPage) {
-      const { path: routePath, contents, metadata } = page;
+      const { path: routePath, contents, metadata, serverValues } = page;
       const htmlString = htmlTemplate
         .replace("<!--META-SLOT-->", metadata)
+        .replace(
+          "<!--SERVER-VALUES-SLOT-->",
+          `<script>self.__SERVER_VALUES = ${JSON.stringify(serverValues)}</script>`,
+        )
         .replace(
           '<div id="root"></div>',
           '<div id="root">' + contents + "</div>",
