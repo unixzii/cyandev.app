@@ -3,8 +3,8 @@ import { writeFileSync } from "node:fs";
 import { Feed } from "feed";
 
 import type * as ssgModule from "../src/main.ssg";
+import { BASE_URL } from "../src/config";
 
-const BASE_URL = "https://cyandev.app";
 const dirname = import.meta.dirname;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

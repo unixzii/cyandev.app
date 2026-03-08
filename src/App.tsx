@@ -4,11 +4,12 @@ import { RouterProvider } from "react-router/dom";
 import { ThemeClientInitializer } from "./theme";
 import { MetadataUpdater } from "./metadata";
 import { IntlProvider } from "./components/IntlProvider";
+import { BASE_URL } from "./config";
 
 export const metadata = {
   title: "Cyandev",
   description: "Cyandev's personal blog",
-  url: `https://cyandev.app`,
+  url: BASE_URL,
 };
 
 export function App(props: {

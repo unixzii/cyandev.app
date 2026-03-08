@@ -5,6 +5,7 @@ import RootLayout from "./pages/layout";
 import NotFound from "./pages/not-found";
 import ErrorBoundary from "./pages/error";
 import { loadPost, loadPage } from "./content-loader";
+import { BASE_URL } from "./config";
 import postIndex from "virtual:postIndex";
 import pages from "virtual:pages";
 
@@ -37,7 +38,7 @@ const routes: RouteObject[] = [
         metadata: {
           title: post.title,
           description: post.description,
-          url: `https://cyandev.app/post/${post.slug}`,
+          url: `${BASE_URL}/post/${post.slug}`,
         },
       })),
       ...Object.keys(pages).map((pageSlug) => ({
