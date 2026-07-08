@@ -1,6 +1,12 @@
+import { useState } from "react";
 import { Link } from "react-router";
 
-import { Logo } from "@/components/Logo";
+import * as env from "@/env";
+import {
+  Logo,
+  isAnimationAllowed as isLogoAnimationAllowed,
+  disableAnimation as disableLogoAnimation,
+} from "@/components/Logo";
 import { FormattedTime } from "@/components/FormattedTime";
 import postIndex from "virtual:postIndex";
 
@@ -21,10 +27,18 @@ function PostItem({ post }: { post: PostMetadata }) {
 }
 
 export default function RootPage() {
+  const [logoAnimated] = useState(() => {
+    const value = isLogoAnimationAllowed();
+    if (env.getType() === "client") {
+      disableLogoAnimation();
+    }
+    return value;
+  });
+
   return (
     <main>
-      <h1 className="page-title font-mono">
-        <Logo />
+      <h1 className="page-title">
+        <Logo animated={logoAnimated} />
       </h1>
       <p className="page-subtitle">
         A random guy on the internet, a software engineer.

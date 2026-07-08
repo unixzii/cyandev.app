@@ -21,7 +21,7 @@ export const NavBar = (props: NavBarProps) => {
     >
       <Link
         className={clsx(
-          "inline-block w-24 font-mono font-bold transition-all duration-500",
+          "inline-block w-24 font-bold transition-all duration-500",
           { "opacity-0 blur-xs": hideHome },
         )}
         to="/"
