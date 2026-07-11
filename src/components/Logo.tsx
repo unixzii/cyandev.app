@@ -110,7 +110,7 @@ export const Logo = ({ animated }: LogoProps) => {
           key={i}
           className={clsx({
             "select-none": state.animating,
-            "font-mono": state.monoFont,
+            "font-mono font-bold": state.monoFont,
             "font-semibold": !state.monoFont,
             "bg-primary/15": state.selectionLength && state.selectionLength > i,
           })}
