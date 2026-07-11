@@ -16,7 +16,7 @@ const animationData: AnimationData[] = [
   { c: "cyand", t: 119 },
   { c: "cyande", t: 42 },
   { c: "cyandev", t: 301 },
-  { s: 1, t: 20 },
+  { s: 1, t: 488 },
   { s: 2, t: 52 },
   { s: 3, t: 20 },
   { s: 4, t: 20 },
@@ -111,6 +111,7 @@ export const Logo = ({ animated }: LogoProps) => {
           className={clsx({
             "select-none": state.animating,
             "font-mono": state.monoFont,
+            "font-semibold": !state.monoFont,
             "bg-primary/15": state.selectionLength && state.selectionLength > i,
           })}
         >
