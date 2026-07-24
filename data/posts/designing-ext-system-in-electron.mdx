@@ -1,0 +1,336 @@
+export const metadata = {
+  title: "为 Electron App 设计扩展系统",
+  tags: ["electron", "frontend", "system-design"],
+  description: "分享为一个内部的 Electron 工具增加扩展系统的实践",
+  date: "2026-07-24T07:22:08.862Z",
+}
+
+我在公司维护一个集成了很多内部平台能力的工具，随着业务的发展，即便是有 AI 的加持，我也无法一个人满足日益增长的用户需求。因此在这段时间，我给这个工具实现了一套扩展系统的，这样每一个人都可以基于这个工具的能力，定制满足自己需求的功能，同时也可以与所有人分享。
+
+本文不会事无巨细地阐述整个系统的全部设计细节，仅包含一些关键的技术和概念，希望起到抛砖引玉的作用。
+
+# Status Quo
+
+这个内部工具是用 Electron 开发的一个跨平台桌面 app，其中一些诸如密钥管理、网络的模块是 Rust 开发的，与 Electron 主进程通过 IPC 进行互操作。现有的很多功能模块都是基于底层的这些基础能力实现的，它们只有很薄的一层前端逻辑（完全运行在渲染进程），Rust 的能力通过 preload 层暴露给前端。
+
+目前整体的进程通信拓扑如下：
+
+```
+  ┌──────────────┐ Stdio / Socket ┌───────────┐       
+  │ Main Process │ ◄────────────► │ Rust Core │       
+  └──▲───────────┘                └───────────┘       
+     │                                                
+     │                                                
+     │    ┌──────────────────────────────────────────┐
+     │    │                                          │
+ipc* │    │            Renderer Process              │
+     │    │                                          │
+     │    │  ┌─────────┐               ┌──────────┐  │
+     └────┼─►│ Preload │◄─────────────►│ Frontend │  │
+          │  └─────────┘ contextBridge └──────────┘  │
+          │                                          │
+          └──────────────────────────────────────────┘
+```
+
+主进程在整个 app 里也是很薄的一层，只负责一些 IPC 通信和平台能力的暴露，主要的业务逻辑都运行在渲染进程的前端层。
+
+# 需求是什么
+
+由于整个 app 都是一个个独立的功能模块组成的（就像侧边栏一个个的 tabs），那么这个扩展系统为这个 app 提供的最主要的扩展点就是 WebView tab。它们当然可以是非常简单的内嵌页面，比如直接嵌入一个 ChatGPT，如果你想也是可以的。但我也需要将这个 app 独有的能力提供给第三方扩展来调用，比如自动处理鉴权的 HTTP 请求，这些在普通浏览器中不存在，是通过 Rust 层和一些 native 模块提供的额外能力。
+
+一个比较简单的实现方案是，将扩展的 WebView 展示在一个 iframe 中，然后通过 `postMessage` 与宿主 app 通信。但这有两个比较大的弊端：首先是扩展代码必须由一个 iframe 承载，无头扩展没有办法优雅实现；前一个问题可以用 worker 来解决，但第二个问题是扩展没有完整的 node 环境，能力比较受限（比如我们现在有需求执行一些本地的 CLI 程序），这些能力又需要额外的桥接。
+
+因此我希望扩展可以获得一个完整的 node 运行环境，与此同时可以与它提供的 WebView 进行通信。
+
+比较容易想到的是 node 提供的 `child_process` 模块，它可以派生一个新进程来运行指定脚本，并支持与父进程通信。但它也有一个显著的问题，那就是不方便与渲染进程里的前端代码通信，所有的消息都要经过主进程，再转发给渲染进程。虽然可以实现我们的需求，但性能上不是最优方案。
+
+# Meet Utility Process
+
+Electron 其实提供了一个更好的接口，那就是 `utilityProcess`。它利用了 Chromium 提供的 [Service 能力](https://chromium.googlesource.com/chromium/src/+/main/docs/mojo_and_services.md)，这是 Chromium 将逻辑拆分到多进程并且通过 Mojo 通信的一种机制，并以此支持 `MessagePort` 这样的 Web 原生能力。我们可以用它为每个扩展提供一个宿主进程，就像 VSCode 一样，让这个宿主进程加载扩展模块，并将封装好的 API 暴露给扩展模块。
+
+## 安全边界
+
+由于内部工具有比较严格的安全审计，我们需要保证扩展不能随意访问到敏感信息，因此如何将扩展代码与主程序代码隔离是比较关键的问题。我们知道，同一个进程中的同一个 v8 Isolate 没有办法安全地隔离对象。而 node 提供的 `vm` 模块仅提供 context 隔离能力，恶意的扩展代码仍然可以通过诸如原型链攻击的方式破坏进程内其他对象的行为。
+
+而扩展代码目前已知是会运行在一个独立的宿主进程中，它们与主进程、渲染进程就是天然隔离的，不会有办法轻易访问到彼此的数据。那么剩下的问题就是不同的扩展是否要运行在不同的宿主进程中了。首先我们要确定扩展之间是否需要严格的隔离，这个在内部评审中其实没有非常强的需求，毕竟扩展并不会直接拿到敏感数据（例如网络请求是在主进程执行的，相关 token 会被自动注入，扩展无需感知）。其次是我们是否需要提供权限机制，即由用户控制扩展能够访问的数据，如果需要实现权限机制，就必须要将不同的扩展隔离在不同的进程。
+
+所谓的安全边界，其实就是数据流转和权限的边界。两个隔离的角色需要能够保证数据不能随意互通，身份不能随意借用。VM context 在我们的应用场景下不提供这种保障，只有进程可以。因为一个扩展宿主进程对渲染进程来说就是一个 message port，而同一个进程即使可以使用不同的 message port，也无法保证扩展之间不会“偷“彼此的 message port。
+
+综上这些设计对于用户来说，就是他可以决定自己的数据能够流向哪个“域”（也就是扩展进程）中。
+
+## 进程通信拓扑设计
+
+有了上面的考虑，我们就可以确定为每个扩展提供独立的宿主进程了。那么最终的进程通信拓扑看起来就应该是这样：
+
+```
+                                 utilityProcess                                     
+         ┌────────────────────────────────────────────────────────┐              
+         │                                                        │              
+  ┌──────▼───────┐ Stdio / Socket ┌───────────┐                   │              
+  │ Main Process │ ◄────────────► │ Rust Core │          ┌────────▼─────────────┐
+  └──▲───────────┘                └───────────┘          │ Ext Host Process (1) │
+     │                                                   └──────────────────────┘
+     │                                                   ┌──────────────────────┐
+     │    ┌──────────────────────────────────────────┐   │ Ext Host Process (2) │
+     │    │                                          │   └──────────────────────┘
+ipc* │    │            Renderer Process              │   ┌──────────────────────┐
+     │    │                                          │   │ Ext Host Process (3) │
+     │    │  ┌─────────┐               ┌──────────┐  │   └──────▲───────────────┘
+     └────┼─►│ Preload │◄─────────────►│ Frontend │  │          │   ...          
+          │  └────▲────┘ contextBridge └──────────┘  │          │                
+          │       │                                  │          │                
+          └───────┼──────────────────────────────────┘          │                
+                  └─────────────────────────────────────────────┘                
+                                       MessagePort                                  
+```
+
+主进程在这里承担中介的角色，负责启动管理扩展宿主进程，并通过传递 message port 将其与渲染进程连接起来。
+
+# IPC 通道
+
+上面做好了进程的连接，接下来需要考虑的就是在这个连接上应该如何通信了。Message port 支持基础的 JavaScript 对象以及 buffer 等复杂对象的传输，但函数等承载行为的对象仍需我们自己处理。
+
+我希望的形态是每个进程可以暴露为一个 proxy 对象，对方可以这样使用它：
+
+```tsx
+const extHost = await startExtensionHost();
+const extService = extHost.endpoint.remoteService;
+
+const pong = await extService.ping('hello');
+```
+
+方法参数均为 message port 支持的类型即可，双方进程都视为有状态的巨型单体服务，再由本地代码封装成上层 API 给扩展调用。
+
+## 抽象通信层
+
+虽然目前我们只使用 `MessagePort` 来做进程间的连接，但对于协议层来说，这个通道仍然应该设计为不感知具体类型的协议。我们可以将其抽象成如下接口：
+
+```tsx
+export interface IpcTransport {
+  postMessage(message: IpcRawMessage): void;
+  onMessage(handler: (message: IpcRawMessage) => void): void;
+}
+```
+
+然后简单适配一下主进程和渲染进程的差异：
+
+```tsx
+function createTransport(port: MessagePortLike): IpcTransport {
+  if (isMessagePortMain(port)) {
+    port.start();
+    return {
+      postMessage(message: IpcRawMessage) {
+        port.postMessage(message);
+      },
+      onMessage(handler) {
+        port.on('message', (event: { message: IpcRawMessage }) => handler(event.message));
+      },
+    };
+  }
+
+  const browserPort: globalThis.MessagePort = port;
+  browserPort.start();
+  return {
+    postMessage(message: IpcRawMessage) {
+      browserPort.postMessage(message);
+    },
+    onMessage(handler) {
+      browserPort.onmessage = (event: MessageEvent<IpcRawMessage>) => handler(event.data);
+    },
+  };
+}
+```
+
+## 接口设计
+
+为了建立一个通道，各方都需要提供两个东西：对方的 port，本地服务的实现。因为我们也需要从建立好的通道中获取对方服务的 proxy 对象，所以还需要再提供一个对方服务的 shape（如果不做自动的运行时类型校验则仅 TypeScript 感知）。
+
+最终接口大致的定义如下：
+
+```tsx
+interface IpcEndpoint<TRemote extends object> {
+  transport: IpcTransport;
+  remoteService: TRemote;
+}
+
+// `AssertIpcService` ensures `TLocal` is a valid service object
+// type (only contains supported functions) at compile time.
+function createIpcEndpoint<
+  TLocal extends object,
+  TRemote extends object,
+>(
+  transport: IpcTransport,
+  localService: AssertIpcService<TLocal>,
+  options?: IpcEndpointOptions,
+): IpcEndpoint<TRemote>;
+```
+
+这里我没有引入自动的运行时类型校验，主要考虑到项目规模，以及这部分代码并不对外，因此只需要在服务函数的实现处进行一些 case-by-case 的检查即可。另外，由于每一个扩展宿主进程都会配备一个单独的 `IpcEndpoint`，我们可以将扩展的身份信息绑定到不同的 service wrapper 上，并由这一层去做权限校验的工作。只有权限通过了，才会转发到具体的 service 实现，并在那一层做进一步的参数校验，最后再执行相关操作。
+
+## Wire Protocol 设计
+
+第一个版本的 wire protocol 非常简单，没有什么过度工程。
+
+```tsx
+type IpcMessage =
+  | { kind: 'call-method', id: number, method: string, args: IpcRawMessage[] }
+  | { kind: 'method-result', id: number, value?: IpcRawMessage, error?: IpcRawMessage };
+```
+
+非常基础的 RPC 协议，通过递增序号标记方法调用，所有的参数都序列化为 JSON 表示。这部分没有什么重点要说的。我们这里不会将身份信息体现在 wire protocol 上，因为前面说过，我们的安全边界是进程和 port，扩展代码发出的数据不具有可信性。我们只会使用消息的源 port 来判断其身份和是否允许访问某个方法，因此也不需要额外在协议中包含这部分信息。
+
+VSCode 的协议中还设计了 ack 消息，用于扩展的 responsive 检测，不过我们的场景中暂时不需要，后面也可以按需扩展。
+
+# 扩展模块 API
+
+## 扩展包形态
+
+这里我采用了标准的 node package 作为扩展包的最终形态，开发者可以将其发布到 package registry 上，理论上 install 之后就可以直接使用。`package.json` 中已经包含了比较丰富的元信息，我们在此基础上可以扩展自己的字段，如 contributions、permissions 等。
+
+为了简化实现，第一版中的扩展需要暴露为标准的 commonjs 模块，可以使用 `require` 直接加载（相信已经有人开始骂了 🥹）。不过后面增加 ESM 模块支持也不需要对整体设计大动干戈，所以暂时这样也可以。
+
+## API 设计
+
+对于第三方开发者来说，他们一定希望有比较 high level 的 API 来调用，而不是与裸的 app service 交互。与 VSCode 类似，我也提供了一套标准 API（对外表现为一个纯 type package），只不过我没有使用 require 劫持的方式，而是直接在 activate 阶段通过参数注入。
+
+```tsx
+export async function activate(ctx: ExtensionContext): Promise<void> {
+  const api = ctx.acquireApi();
+  api.ui.showMessage('Hello, world!');
+}
+```
+
+上面的 `ExtensionContext` 实际上就是基于 app 渲染进程提供的服务封装而来的，对应的服务定义可能如下：
+
+```tsx
+interface AppService {
+  showUiMessage(message: string): Promise<void>;
+  // ...
+}
+```
+
+由于服务对象是一个巨型单体对象，它也会随项目的迭代慢慢膨胀。单一对象的状态管理对第三方开发者来说是比较灾难的（可以联想一下 OpenGL 的接口设计），所以我们需要在扩展宿主进程这一侧提供一些封装。
+
+扩展宿主进程在加载扩展模块前创建了一个 `ExtensionApi` 对象将 `AppService` 隐藏在内部，并对外提供更友好、有状态的结构化 API，然后再通过 `ExtensionContext` 传递给扩展代码。同时 `ExtensionContext` 还提供了一个 `disposables` 数组，用于存放卸载扩展时需要做的清理工作，所以我们就不需要扩展模块再额外提供一个 `deactivate` 函数了。
+
+# WebView 能力
+
+WebView 是扩展系统中的一个通用能力，不仅侧边栏 tab 会用到它，以后还可能有一些 popup UI 也可以使用。不过这里就主要以侧边栏为例来解释一下它的设计，其他场景也是类似的。
+
+首先这种会影响主程序 UI 的能力，第一选择都是在 `package.json` 中静态定义，这样会减少很多攻击面，当然通过 app service 来暴露在当前设计下也是比较安全的。为了在侧边栏注册一个入口，扩展需要添加如下字段：
+
+```tsx
+{
+  "contributions": {
+    "sidebar": [
+      { "id": "hi", "viewId": "panel", "title": "Hello", "icon": "gear" }
+    ]
+  }
+}
+```
+
+渲染进程在读取这个配置之后就会在侧边栏中展示一个图标。
+
+## Web 容器
+
+在 Electron app 中我们可以使用两种网页容器，一种是 Web 标准中的 `iframe`，还有一种是 Electron 提供的 `webview` 标签。后者提供更灵活的控制能力，但移植性并不好，而且可能会存在很多渲染上的坑，因此这里我还是选择了 `iframe` 方案。通过 sandbox 属性，我们还是可以获得比较好的安全性，再配合自定义 scheme，扩展页面完全无法直接操作顶层页面。
+
+我这里在扩展宿主的 service 和 app service 定义中添加了几个接口：
+
+```tsx
+interface ExtensionHostService {
+  createWebView(viewId: string, instanceId: string): Promise<void>;
+  postWebViewMessage(instanceId: string, data: IpcRawMessage): Promise<void>;
+  destroyWebView(instanceId: string): Promise<void>;
+  // ...
+}
+
+interface AppService {
+  setWebViewContents(instanceId: string, html: string): Promise<void>;
+  postWebViewMessage(instanceId: string, data: IpcRawMessage): Promise<void>;
+  // ...
+}
+```
+
+经过扩展宿主的上层封装之后，扩展可以这样提供一个 WebView：
+
+```tsx
+class MyPanelWebViewProvider implements ExtensionWebViewProvider {
+  #webview: ExtensionWebView | undefined;
+
+  async configureWebView(webview: ExtensionWebView): Promise<void> {
+    this.#webview = webview;
+    webview.setHtml('<html>...</html>');
+  }
+  
+  async handleMessage(message: unknown): Promise<void> {
+    this.#webview!.postMessage('reply');
+  }
+  
+  async dispose(): Promise<void> {
+    // ...
+  }
+}
+
+export async function activate(ctx: ExtensionContext): Promise<void> {
+  const api = ctx.acquireApi();
+  api.webview.registerProvider('panel', MyPanelWebViewProvider);
+}
+```
+
+扩展 WebView 打开时，渲染进程将调用扩展的 `createWebView` 函数，并传入一个唯一的 instance ID。后续扩展代码就可以加载 HTML 片段，然后通过宿主的 `setWebViewContents` 传递回来，这样渲染进程就拿到了所需的内容来给 iframe 展示。
+
+## 本地资源加载
+
+只有 HTML 片段还不足以满足所有扩展对 WebView 的需求，一般来说第三方开发者都会使用自己的前端框架开发一个 SPA，那么我们的 Web 容器就要有加载本地 JavaScript、CSS 等资源文件的能力。
+
+为了同源安全性，我们为扩展的 WebView 分配了一个单独的 scheme，比如这里就叫 `ext-webview://` 吧。在主进程中我们可以使用 `protocol.registerSchemesAsPrivileged` 来注册一个标准协议的 scheme，这样扩展的 WebView 仍然可以使用 http 协议中才能使用的能力（如 `localStorage`）。
+
+在上面提到的 app service 中，`setWebViewContents` 接口通过 context bridge 将 HTML 传递给主进程，生成一个随机的 instance ID 挂载到自定义 scheme 下。这里有几种不同的路由：
+
+```
+# 壳页面路由（后文会提到）
+ext-webview://<ext-id>/<instance-id>/shell
+
+# 扩展提供的页面 HTML
+ext-webview://<ext-id>/<instance-id>/root
+
+# 扩展提供的资源文件（相对于扩展包根目录）
+ext-webview://<ext-id>/<instance-id>/resources/<path-to-res>
+```
+
+由于资源文件的路由是确定格式，我们可以在扩展宿主进程中直接提供 API 为指定 WebView 提供同步的路径转换能力：
+
+```tsx
+class MyPanelWebViewProvider implements ExtensionWebViewProvider {
+  async configureWebView(webview: ExtensionWebView): Promise<void> {
+    const scriptUri = webview.createResourceUri('/webview/app.js');
+    webview.setHtml(/* use scriptUri here */);
+  }
+  // ...
+}
+```
+
+## 宿主样式注入
+
+为了 UI 的协调和统一，扩展开发者可能希望使用一些宿主 app 中的设计元素（design token），例如颜色、字体、间距等。这些元素在宿主 app 中可以动态调节，用户可以切换主题色、调整布局紧凑度等等。因此扩展中不能 hardcode 这部分样式，需要有一种机制可以动态获取宿主当前的样式，最好是以 CSS variables 的形式提供。
+
+这里我们可能首先会想到让宿主 app 直接修改 iframe 的 content document，但很显然，我们会被浏览器的同源策略阻断。因为宿主 app 的资源是通过 `file://` 或其他协议访问的，而扩展资源上面说过是 `ext-webview://` 协议。
+
+其实我们依然可以通过 `postMessage` 来通信。但这对扩展的开发者不是特别友好，因为需要通过代码手动监听样式变化，然后自己设置 CSS variables。有没有一种方案可以让扩展页面无感地使用这些变量呢？
+
+其实观察一下 VSCode 扩展中的 WebView，会发现扩展自己的 HTML 内容实际上被嵌套在了两层 iframe 中。那么外面多余的这一层（我这里称为壳页面）就可以做很多事情了，由于它与扩展页面同源，因此这一层可以直接操作 content document，当然也可以修改 `html` 标签来注入 CSS variables。而壳页面又由宿主 app 提供，自带了与宿主 app 通信的逻辑，无需开发者感知。不过需要注意的是，原先扩展页面与宿主 app 可以直接通过 `postMessage` 通信，现在需要经由壳页面中转一下。我们需要对扩展页面的消息做一定封装，避免与壳页面的消息冲突。
+
+## 页面 Keep Alive
+
+前面说过，我们的 app 是多 tab 的，意味着用户可以随时切换页面。内部的第一方功能是直接由 React 实现的，并且状态都存放于 store 中，页面组件卸载不意味着数据也被卸载，因此切换 tab 时用户并不会感知数据发生了重新加载。但对于扩展页面，由于它们都是由 iframe 展示的，在 iframe 节点卸载时，其页面状态也会完全丢失。我们不希望用户每次切换扩展页面时都感觉在重新加载，因此需要一种 iframe “保活”机制，能让我们实现类似浏览器切换 tab 的体验。
+
+一种比较常见的做法是将 iframe 直接挂载到 body 上，并通过 CSS 去控制其布局、层级和可见性等。这种方式实现比较简单，且 iframe 节点位置也可以保持稳定。但它也有一个明显的弊端就是布局不够灵活，当页面复杂后，我们 z-index 的维护成本就会非常高，很容易出现层级错乱的问题。我还是希望这个 iframe 尽可能可以像其他组件一样，可以被任意嵌套在需要的地方。
+
+这里我们可以使用一个 Chromium 133 中引入的一个新特性 — [`moveBefore`](https://developer.mozilla.org/en-US/docs/Web/API/Element/moveBefore)，它允许我们原子地将一个节点在整个所属 DOM 树上移动，而不像 `appendChild` 那样会先移除再挂载。由于节点从来没有从 DOM 树上移除，因此它所有的状态都将被保持。这就能满足我们的需求，在需要卸载 iframe 时，我们暂时将其 move 到文档某个隐藏的 div 中，而在需要显示时再 move 回目标容器。需要注意的是，`moveBefore` 操作的节点必须是已经挂载在 DOM 树上的，否则将会抛出 `HierarchyRequestError` 错误。另外在 React 中我们还需要注意卸载的时机，`useEffect` 的 cleanup 时机是晚于 DOM 操作的，会导致 iframe 节点直接被卸载，因此我们需要使用 `useLayoutEffect` 来做卸载时的节点 move 操作。
+
+# 写在最后
+
+AI 时代，很多人都会担心软件质量的下降，我们也不例外。与其让 AI 大面积地接触整个代码仓库，我们选择分而治之，将风险限制在安全边界之内。涉及核心资产（例如这套扩展系统）的开发，虽然 AI 也会介入，但更多的是承担实现者的角色。我曾经尝试让 AI 独自完成整个系统的设计，然而当时的 Claude Opus 4.8 xhigh 效果并不是很理想。AI 会给出一些我没有想到的单点问题，但整体方向上依然需要很多人为的 steering。
+
+在我看来，AI 就是一个工具，它的好坏不仅取决于模型本身，很大程度更取决于用它的人。我们无法约束所有人如何用 AI，但我们可以构建更好的基础和工具 ，尽可能提高 AI 产出的下限。这就是我在项目里引入扩展系统的初衷，也许未来我们需要更多类似的东西。就像 Rust、容器等技术，划清软件之间的安全边界，也划清人与 AI 的安全边界。

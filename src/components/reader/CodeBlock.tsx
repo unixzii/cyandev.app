@@ -17,7 +17,7 @@ export function FigureCodeBlock(props: PropsWithChildren) {
 export function PreCodeBlock(props: PropsWithChildren) {
   const codeElement = Children.only(props.children) as JSX.Element;
   const code = codeElement.props.children as string;
-  const codeLines = code.trim().split("\n");
+  const codeLines = code.trimEnd().split("\n");
   return (
     <div className="code-block">
       <pre className="shiki">
