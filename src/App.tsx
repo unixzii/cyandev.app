@@ -2,14 +2,15 @@ import { Suspense } from "react";
 import { RouterProvider } from "react-router/dom";
 
 import { ThemeClientInitializer } from "./theme";
-import { MetadataUpdater } from "./metadata";
+import { type Metadata, MetadataUpdater } from "./metadata";
 import { IntlProvider } from "./components/IntlProvider";
 import { BASE_URL } from "./config";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Cyandev",
   description: "Cyandev's personal blog",
   url: BASE_URL,
+  imageUrl: "https://cy4n.dev/twitter-cards/common.png",
 };
 
 export function App(props: {
